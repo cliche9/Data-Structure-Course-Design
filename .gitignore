@@ -1,0 +1,14 @@
+# root
+/*
+!.gitignore
+!*.h
+# skipList
+!/跳表
+/跳表/*
+!*.cpp
+!*.h
+# externalSort
+!/外排序-竞赛树
+/外排序-竞赛树/*
+!*.cpp
+!*.h
