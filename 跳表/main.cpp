@@ -110,6 +110,7 @@ int main() {
 		cout << "# display : " << endl;
 		sList.display();
 		cout << endl;
+		cout << endl;
 	}
 
 	return 0;
