@@ -73,14 +73,14 @@ int main() {
 				int before = sList.compareResult();
 				cout << "# erase-before-restruct : " << target <<", 比较次数: " << before << endl;
 				// 插入+重构再次查找
-				
+				/*
 				sList.insert(target);
 				sList.restruct();
 				sList.erase(target);
 				int after = sList.compareResult();
 				cout << "# erase-after-restruct : " << target << ", 比较次数: " << after
 					 << ", after / before = " << setprecision(5) << (double) after / before << endl;
-				
+				*/
 				break;
 			}
 			case 4: {
@@ -92,14 +92,14 @@ int main() {
 				int before = sList.compareResult();
 				cout << "# removeMax-before-restruct : " << maxElement << ", 比较次数: " << before << endl;
 				// 插入+重构再次删除
-				/*
+				
 				sList.insert(maxElement);
 				sList.restruct();
 				sList.removeMax();
 				int after = sList.compareResult();
 				cout << "# removeMax-after-restruct : " << maxElement << ", 比较次数: " << after
 					 << ", after / before = " << setprecision(5) << (double) after / before << endl;
-				*/
+				
 				break;
 			}
 			case 6: {

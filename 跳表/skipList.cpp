@@ -129,17 +129,19 @@ int skipList<T>::removeMax() {
 		return -1;
 	// 找最大，即为寻找小于tailKey的最大节点
 	// search
-	skipNode<T> *beforeNode = headerNode, *curNode = headerNode;
+	skipNode<T> *beforeNode = headerNode;
 	for (int i = curMaxLevel; i >= 0; i--) {
-		while (++compareCount && curNode->next[i]->element < tailKey)
-			curNode = curNode->next[i];
-		while (++compareCount && beforeNode->next[i]->element < tailKey && beforeNode->next[i]->next[i]->element < tailKey)
+		while (++compareCount && beforeNode->next[i]->element < tailKey) {
+			if (beforeNode->next[i]->next[i] == tailNode)
+				break;
 			beforeNode = beforeNode->next[i];
+		}
 		last[i] = beforeNode;
 	}
 	// erase
+	skipNode<T> *curNode = beforeNode->next[0];
 	int theValue = curNode->element;
-	
+
 	for (int i = 0; i <= curMaxLevel && last[i]->next[i] == curNode; i++)
 		last[i]->next[i] = curNode->next[i];
 	while (curMaxLevel >= 0 && headerNode->next[curMaxLevel] == tailNode)
