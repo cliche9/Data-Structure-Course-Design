@@ -7,7 +7,7 @@ template <class T>
 skipList<T>::skipList(T largeKey, int maxPairs, float prob) {
     // 设置各项参数
     cutOff = prob * RAND_MAX;
-    maxLevel = (int)ceil(logf((float)maxPairs) / logf(1/prob)) - 1;
+    maxLevel = (int)floor(logf((float)maxPairs) / logf(1/prob));
     curMaxLevel = 0;
 	compareCount = 0;
     _size = 0;
@@ -166,7 +166,7 @@ int skipList<T>::xorValue() {
 
 template <class T>
 void skipList<T>::restruct() {
-	curMaxLevel = _size == 0 ? 0 : (int) ceil(log2(_size)) - 1;
+	curMaxLevel = _size <= 1 ? 0 : (int) floor(log2(_size));
 
 	for (int i = 1; i <= curMaxLevel; i++) {
 		// 从第1层开始，利用前一层的数据，每隔一个节点接一个节点

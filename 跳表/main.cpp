@@ -4,13 +4,13 @@
 using namespace std;
 
 int main() {
-	freopen("/Users/abc_mac/Documents/Code/数据结构课设/跳表/SkipListData/generator/data/input/input_8.txt", "r", stdin);
-	freopen("/Users/abc_mac/Documents/Code/数据结构课设/跳表/SkipListData/generator/data/output/output_8.txt", "w", stdout);
+	freopen("/Users/abc_mac/Documents/Code/数据结构课设/跳表/SkipListData/generator/data/input/input_9.txt", "r", stdin);
+	freopen("/Users/abc_mac/Documents/Code/数据结构课设/跳表/SkipListData/generator/data/output/output_9.txt", "w", stdout);
 	// freopen("a.in", "r", stdin);
 	// freopen("a.out", "w", stdout);
 	int n = 0, m = 0;
 	cin >> n >> m;
-	skipList<int> sList(INT_MAX);
+	skipList<int> sList(INT_MAX, 1024);
 
 	for (int i = 0; i < m; i++) {
 		int t = 0;
@@ -73,14 +73,14 @@ int main() {
 				int before = sList.compareResult();
 				cout << "# erase-before-restruct : " << target <<", 比较次数: " << before << endl;
 				// 插入+重构再次查找
-				/*
+				
 				sList.insert(target);
 				sList.restruct();
 				sList.erase(target);
 				int after = sList.compareResult();
 				cout << "# erase-after-restruct : " << target << ", 比较次数: " << after
 					 << ", after / before = " << setprecision(5) << (double) after / before << endl;
-				*/
+				
 				break;
 			}
 			case 4: {
@@ -92,14 +92,14 @@ int main() {
 				int before = sList.compareResult();
 				cout << "# removeMax-before-restruct : " << maxElement << ", 比较次数: " << before << endl;
 				// 插入+重构再次删除
-				
+				/*
 				sList.insert(maxElement);
 				sList.restruct();
 				sList.removeMax();
 				int after = sList.compareResult();
 				cout << "# removeMax-after-restruct : " << maxElement << ", 比较次数: " << after
 					 << ", after / before = " << setprecision(5) << (double) after / before << endl;
-				
+				*/
 				break;
 			}
 			case 6: {
