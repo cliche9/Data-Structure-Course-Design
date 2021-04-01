@@ -4,6 +4,8 @@
 using namespace std;
 
 int main() {
+	// freopen("/Users/abc_mac/Documents/Code/数据结构课设/跳表/SkipListData/duplicate/input/input_9.txt", "r", stdin);
+	// freopen("/Users/abc_mac/Documents/Code/数据结构课设/跳表/SkipListData/duplicate/my_output/output_9.txt", "w", stdout);
 	freopen("/Users/abc_mac/Documents/Code/数据结构课设/跳表/SkipListData/generator/data/input/input_9.txt", "r", stdin);
 	freopen("/Users/abc_mac/Documents/Code/数据结构课设/跳表/SkipListData/generator/data/output/output_9.txt", "w", stdout);
 	// freopen("a.in", "r", stdin);
