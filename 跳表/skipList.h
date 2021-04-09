@@ -38,9 +38,10 @@ private:
     T tailKey;              // 一个很大的key值，作为末尾标记
     skipNode<T> *headerNode;     // 头节点指针
     skipNode<T> *tailNode;       // 尾节点指针
-    skipNode<T> **last;          // 指针数组--存放什么？
+    skipNode<T> **last;          /* 指针数组--存放search过程中跳表每一层上
+                                    目标节点的前一个节点 */
     int level() const;      // 对每个节点产生级数
-    skipNode<T> *search(const T &);    // search，设置last
+    skipNode<T> *search(const T &);    // 搜索对应关键字的节点，设置last数组
 };
 
 #endif

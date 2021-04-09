@@ -184,7 +184,7 @@ void skipList<T>::restruct() {
 	// 更新暂未用到的更高层
 	for (int i = curMaxLevel + 1; i <= maxLevel; i++)
 		headerNode->next[i] = tailNode;
-	cout << "# restruct : done!" << endl;
+	// cout << "# restruct : done!" << endl;
 }
 
 template <class T>

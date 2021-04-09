@@ -36,20 +36,21 @@ int main() {
 	memset(opt_count, 0, sizeof(opt_count));
 	*/
 
-	for (int i = 0; i < n; i++) {
+	for (int i = 1; i < n; i++) {
 		/*
 		每过一组重构一次，比较两者效率差别
 		if (i & 1)
 			sList.restruct();
 		for (int j = 0; j < 120; j++) {
 		*/
-		cout << "=========================================" << endl;
+		cout << "==================================================================================" << endl;
 		cout << "- `1 num`，查找跳表中是否含有元素 `num`，含有则输出 `YES`，否则输入 `NO`" << endl
 			<< "- `2 num`，向跳表中插入元素 `num`" << endl
 			<< "- `3 num`，将跳表中的元素 `num` 删除" << endl
 			<< "- `4`，删除跳表中的最小元素，并将该元素输出" << endl
 			<< "- `5`，删除跳表中的最大元素，并将该元素输出" << endl
-			<< "- `6`，输出跳表中所有元素的亦或" << endl;
+			<< "- `6`，输出跳表中所有元素的亦或" << endl
+			<< "请输入你的操作:  ";
 			int opt = 0;
 			cin >> opt;
 			switch (opt) {
@@ -58,7 +59,7 @@ int main() {
 					cin >> target;
 					bool res = sList.find(target);
 					int before = sList.compareResult();
-					cout << "# find-before-restruct : " << target << ", 比较次数: " << before << ", result : ";
+					cout << "# find : " /*-before-restruct : "*/ << target << ", 比较次数: " << before << ", result : ";
 					if (res)
 						cout << "Found";
 					else
@@ -84,7 +85,7 @@ int main() {
 					cin >> element;
 					sList.insert(element);
 					int before = sList.compareResult();
-					cout << "# insert-before-restruct : " << element << ", 比较次数: " << before << endl;
+					cout << "# insert : " /*-before-restruct : "*/ << element << ", 比较次数: " << before << endl;
 					// 删除+重构再次查找
 					/*
 					sList.erase(element);
@@ -101,7 +102,7 @@ int main() {
 					cin >> target;
 					sList.erase(target);
 					int before = sList.compareResult();
-					cout << "# erase-before-restruct : " << target <<", 比较次数: " << before << endl;
+					cout << "# erase : " /*-before-restruct : "*/ << target <<", 比较次数: " << before << endl;
 					// 插入+重构再次查找
 					/*
 					sList.insert(target);
@@ -120,7 +121,7 @@ int main() {
 				case 5: {
 					int maxElement = sList.removeMax();
 					int before = sList.compareResult();
-					cout << "# removeMax-before-restruct : " << maxElement << ", 比较次数: " << before << endl;
+					cout << "# removeMax : " /*-before-restruct : "*/ << maxElement << ", 比较次数: " << before << endl;
 					// 插入+重构再次删除
 					/*
 					sList.insert(maxElement);
