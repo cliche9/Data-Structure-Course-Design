@@ -4,13 +4,13 @@
 #include "../exception.h"
 
 template <class T>
-class leastLoserTree {
+class minLoserTree {
 public:
-    leastLoserTree(T *thePlayers, int theNumberOfPlayers) {
+    minLoserTree(T *thePlayers, int theNumberOfPlayers) {
         tree = NULL;
         initialize(thePlayers, theNumberOfPlayers);
     }
-    ~leastLoserTree() { delete[] tree; }
+    ~minLoserTree() { delete[] tree; }
     void initialize(T *, int);
     int winner() const { return tree[0]; }
     int loser(int i) const { return (i < numberOfPlayers) ? tree[i] : 0; };

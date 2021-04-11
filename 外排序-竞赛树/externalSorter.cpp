@@ -3,3 +3,12 @@
     相对较少，即重复比较次数最多的是最短的串，类似huffman编码-huffman树。
 */
 
+#include "minLoserTree.h"
+#include "minLoserTree.cpp"
+
+int *externalFiles;
+int *buffers;
+
+int main() {
+
+}

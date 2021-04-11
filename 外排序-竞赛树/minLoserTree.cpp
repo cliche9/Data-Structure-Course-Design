@@ -1,7 +1,7 @@
-#include "leastLoserTree.h"
+#include "minLoserTree.h"
 
 template <class T>
-void leastLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
+void minLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     int n = theNumberOfPlayers;
     if (n < 2)
         throw illegalParameterValue("must have at least 2 players!");
@@ -39,7 +39,7 @@ void leastLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
 }
 
 template <class T>
-void leastLoserTree<T>::play(int p, int leftChild, int rightChild) {
+void minLoserTree<T>::play(int p, int leftChild, int rightChild) {
     // 从p开始向上比赛，结果存在tree[p]中
     // leftChild - p的左孩子
     // rightChild - p的右孩子
@@ -60,7 +60,7 @@ void leastLoserTree<T>::play(int p, int leftChild, int rightChild) {
 
 /*
 template <class T>
-void leastLoserTree<T>::rePlay(int thePlayer) {
+void minLoserTree<T>::rePlay(int thePlayer) {
     // thePlayer的比赛重赛
     int n = numberOfPlayers;
     if (thePlayer <= 0 || thePlayer > n)
@@ -119,7 +119,7 @@ void leastLoserTree<T>::rePlay(int thePlayer) {
 */
 
 template <class T>
-void leastLoserTree<T>::rePlay(int thePlayer) {
+void minLoserTree<T>::rePlay(int thePlayer) {
     // 外排序中重赛的永远是最后赢者，所以不需要考虑赢者树了
     int n = numberOfPlayers;
     if (thePlayer <= 0 || thePlayer > n)
@@ -147,7 +147,7 @@ void leastLoserTree<T>::rePlay(int thePlayer) {
 }
 
 template <class T>
-void leastLoserTree<T>::output() const {
+void minLoserTree<T>::output() const {
     cout << "number of players  = " << numberOfPlayers
          << " lowExt = " << lowExt
          << " offset = " << offset << endl;
