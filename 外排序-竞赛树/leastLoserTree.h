@@ -13,7 +13,7 @@ public:
     ~leastLoserTree() { delete[] tree; }
     void initialize(T *, int);
     int winner() const { return tree[0]; }
-    int loser(int i) const;
+    int loser(int i) const { return (i < numberOfPlayers) ? tree[i] : 0; };
     void rePlay(int); 
     void output() const;
 private:

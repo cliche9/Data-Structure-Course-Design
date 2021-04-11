@@ -10,7 +10,7 @@ void leastLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     numberOfPlayers = theNumberOfPlayers;
     delete[] tree;
     tree = new int[n + 1];
-    winners = new int[n];
+    winners = new int[n + 1];
 
     // 计算 s = 2^log(n - 1)
     int i, s;
@@ -54,8 +54,11 @@ void leastLoserTree<T>::play(int p, int leftChild, int rightChild) {
         // 到父节点
         p /= 2;
     }
+    // 设置全局赢者
+    tree[0] = winners[0];
 }
 
+/*
 template <class T>
 void leastLoserTree<T>::rePlay(int thePlayer) {
     // thePlayer的比赛重赛
@@ -112,4 +115,46 @@ void leastLoserTree<T>::rePlay(int thePlayer) {
         // 剩余的比赛
 
     }
+}
+*/
+
+template <class T>
+void leastLoserTree<T>::rePlay(int thePlayer) {
+    // 外排序中重赛的永远是最后赢者，所以不需要考虑赢者树了
+    int n = numberOfPlayers;
+    if (thePlayer <= 0 || thePlayer > n)
+        throw illegalParameterValue("Player index is illegal");
+    
+    int matchNode;
+
+    // 找到thePlayer的第一场比赛
+    if (thePlayer <= lowExt)
+        // 从最底层开始
+        matchNode = (offset + thePlayer) / 2;
+    else
+        matchNode = (thePlayer - lowExt + n - 1) / 2;
+
+    // 改变的是赢者
+    for (; matchNode >= 1; matchNode /= 2) {
+        if (players[tree[matchNode]] <= players[thePlayer]) {
+            int winner = tree[matchNode];
+            tree[matchNode] = thePlayer;
+            thePlayer = winner;
+        }
+    }
+    // 记录最终赢者
+    tree[0] = thePlayer;
+}
+
+template <class T>
+void leastLoserTree<T>::output() const {
+    cout << "number of players  = " << numberOfPlayers
+         << " lowExt = " << lowExt
+         << " offset = " << offset << endl;
+    cout << "complete loser tree pointers are " << endl;
+    for (int i = 1; i < numberOfPlayers; i++)
+        cout << tree[i] << ' ';
+    cout << endl;
+    cout << "the final winner is " << endl;
+    cout << tree[0] << endl;
 }
