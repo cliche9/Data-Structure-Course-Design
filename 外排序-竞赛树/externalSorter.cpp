@@ -6,9 +6,16 @@
 #include "minLoserTree.h"
 #include "minLoserTree.cpp"
 
-int *externalFiles;
-int *buffers;
+template <class T>
+class externalSorter: public minLoserTree<T> {
+public:
+    externalSorter(T *firstChunk, int bufferSize, int chunks);
+    ~externalSorter();
+private:
+    int mergeChunks;
+};
 
-int main() {
+template <class T>
+externalSorter<T>::externalSorter(T *firstChunk, int bufferSize, int chunks): minLoserTree<T>(firstChunk, bufferSize), mergeChunks(chunks) {
 
 }
