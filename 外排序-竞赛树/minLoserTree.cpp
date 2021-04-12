@@ -18,7 +18,7 @@ void minLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     for (s = 1; 2 * s <= n - 1; s += s);
     // lowExt: 最底层内部节点个数
     lowExt = 2 * (n - s);
-    // offset: ？？
+    // offset: 设置的偏移量
     offset = 2 * s - 1;
 
     // 比赛，直到最外部一行
@@ -49,8 +49,8 @@ void minLoserTree<T>::play(int p, int leftChild, int rightChild) {
 
     // 可能有更多比赛
     while (p % 2 == 1 && p > 1) {
-        winners[p / 2] = (players[winners[p - 1]] <= players[winners[p]]) ? tree[p - 1] : tree[p];
-        tree[p / 2] = (players[winners[p - 1]] <= players[winners[p]]) ? tree[p] : tree[p - 1];
+        winners[p / 2] = (players[winners[p - 1]] <= players[winners[p]]) ? winners[p - 1] : winners[p];
+        tree[p / 2] = (players[winners[p - 1]] <= players[winners[p]]) ? winners[p] : winners[p - 1];
         // 到父节点
         p /= 2;
     }
@@ -119,13 +119,14 @@ void minLoserTree<T>::rePlay(int thePlayer) {
 */
 
 template <class T>
-void minLoserTree<T>::rePlay(int thePlayer) {
+void minLoserTree<T>::rePlay(int thePlayer, T newElement) {
     // 外排序中重赛的永远是最后赢者，所以不需要考虑赢者树了
     int n = numberOfPlayers;
     if (thePlayer <= 0 || thePlayer > n)
         throw illegalParameterValue("Player index is illegal");
     
-    int matchNode;
+    players[thePlayer] = newElement;
+    int matchNode = 0;
 
     // 找到thePlayer的第一场比赛
     if (thePlayer <= lowExt)
