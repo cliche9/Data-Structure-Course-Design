@@ -1,12 +1,18 @@
 #include "minLoserTree.h"
 #include "minLoserTree.cpp"
+#include "externalSorter.cpp"
 
 int main() {
-    int nums[11] = {-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-
-    minLoserTree<int> loserTree(nums, 10);
-
-    loserTree.output();
-
+    string rootDirectory = "/Users/abc_mac/Documents/Code/数据结构课设/外排序-竞赛树/data/";
+    string inFilename;
+    cout << "请输入你要进行排序的文件名称: ";
+    cin >> inFilename;
+    fileLog fileToSort(rootDirectory + inFilename, rootDirectory + "resultOf" + inFilename);
+    int bufferSize = 0;
+    cout << "请输入缓冲区可存放元素个数: ";
+    cin >> bufferSize;
+    externalSorter<int> sorter(bufferSize, fileToSort);
+    sorter.sortAndOutput();
+    
     return 0;
 }

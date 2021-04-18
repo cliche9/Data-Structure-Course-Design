@@ -8,8 +8,10 @@ void minLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     // 初始化private元素
     players = thePlayers;
     numberOfPlayers = theNumberOfPlayers;
-    delete[] tree;
-    delete[] winners;
+    if (tree != NULL)
+        delete[] tree;
+    if (winners != NULL)
+        delete[] winners;
     tree = new int[n + 1];
     winners = new int[n + 1];
 
