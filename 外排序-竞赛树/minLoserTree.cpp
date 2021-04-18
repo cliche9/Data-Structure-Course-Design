@@ -9,6 +9,7 @@ void minLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     players = thePlayers;
     numberOfPlayers = theNumberOfPlayers;
     delete[] tree;
+    delete[] winners;
     tree = new int[n + 1];
     winners = new int[n + 1];
 
@@ -36,6 +37,8 @@ void minLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     // i是最左端余下的外部节点
     for (; i <= n; i += 2)
         play((i - lowExt + n - 1) / 2, i - 1, i);
+    // 设置全局赢者
+    tree[0] = winners[1];
 }
 
 template <class T>
@@ -54,8 +57,6 @@ void minLoserTree<T>::play(int p, int leftChild, int rightChild) {
         // 到父节点
         p /= 2;
     }
-    // 设置全局赢者
-    tree[0] = winners[0];
 }
 
 /*

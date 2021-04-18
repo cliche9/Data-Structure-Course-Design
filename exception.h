@@ -123,5 +123,18 @@ class undefinedMethod
    private:
       string message;
 };
+
+// fail to open file
+class failToOpenFile
+{
+   public:
+      failToOpenFile(string theMessage = 
+                   "Fail to open this file")
+            {message = theMessage;}
+      void outputMessage() {cout << message << endl;}
+   private:
+      string message;
+};
+
 #endif
 
