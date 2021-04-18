@@ -7,12 +7,12 @@ int main () {
 
   char c;
   while (is.get(c))                  // loop getting single characters
-    std::cout << c;
+    std::cout << is.tellg() << std::endl << c << std::endl;
 
   if (is.eof())                      // check for EOF
-    std::cout << "[EoF reached]\n";
+    std::cout << is.tellg() << "[EoF reached]\n";
   else
-    std::cout << "[error reading]\n";
+    std::cout << is.tellg() << "[error reading]\n";
 
   is.close();                        // close file
 
