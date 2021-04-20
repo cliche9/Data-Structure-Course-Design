@@ -79,13 +79,14 @@ void externalSorter<T>::sequentialStringGenerator() {
         // 更新顺串个数
         int sequentialTag = buffer_s[winner].key;
         numbersOfSequentialString = (sequentialTag <= numbersOfSequentialString) ? numbersOfSequentialString : sequentialTag;
+        // 打开对应顺串的文件
         outfile.open(fileToSort.targetPath + to_string(sequentialTag) + ".txt", ios::app);
+        // 输出到对应文件
         outfile << buffer_s[winner].value << ' ';
-        if (!infile.eof())
-            infile >> s.value;
-        else
+        // 从源文件继续读取
+        if (!(infile >> s.value))
             s.value = INT_MAX;
-        s.key = (s.value < buffer_s[winner].value) ? sequentialTag + 1 : sequentialTag;
+        s.key = (s.value < buffer_s[winner].value || s.value == INT_MAX) ? sequentialTag + 1 : sequentialTag;
         supportLoserTree.rePlay(winner, s);
         outfile.close();
     }
