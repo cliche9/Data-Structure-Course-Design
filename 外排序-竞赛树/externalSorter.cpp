@@ -52,14 +52,17 @@ void externalSorter<T>::sequentialStringGenerator() {
     if (!infile.is_open())
         throw failToOpenFile("无法打开对应路径文件, 构建顺串失败!\n");
     
+    while (bufferSize < 2) {
+        cout << "缓冲区空间不足, 请更新缓冲区大小, 大小至少为: 2\n请输入缓冲区可存放元素个数: ";
+        cin >> bufferSize;
+    }
     cout << "正在构建顺串...\n";
     // 生成缓存区
-    sequentialStringElement<T> *buffer_s = new sequentialStringElement<T>[bufferSize / 2];
-    for (int i = 0; i < bufferSize / 2; i++) {
+    // 多一个空间，是为了构建败者树，为了模拟缓存区
+    sequentialStringElement<T> *buffer_s = new sequentialStringElement<T>[bufferSize / 2 + 1];
+    for (int i = 1; i <= bufferSize / 2; i++) {
         int t_value = 0;
-        if (!infile.eof())
-            infile >> t_value;
-        else
+        if (!(infile >> t_value))
             t_value = INT_MAX;
         buffer_s[i].key = 1;
         buffer_s[i].value = t_value;
@@ -67,7 +70,7 @@ void externalSorter<T>::sequentialStringGenerator() {
     // 生成辅助败者树
     minLoserTree<sequentialStringElement<T> > supportLoserTree(buffer_s, bufferSize / 2);
     // 将顺串生成到多个小文件中，编号为1-n
-    int winner = 0, i = 0;
+    int winner = 0;
     sequentialStringElement<T> s;
     ofstream outfile;
     while (buffer_s[supportLoserTree.winner()].value != INT_MAX) {
@@ -82,7 +85,7 @@ void externalSorter<T>::sequentialStringGenerator() {
             infile >> s.value;
         else
             s.value = INT_MAX;
-        s.key = (s.value < buffer_s[winner].value) ? sequentialTag : sequentialTag + 1;
+        s.key = (s.value < buffer_s[winner].value) ? sequentialTag + 1 : sequentialTag;
         supportLoserTree.rePlay(winner, s);
         outfile.close();
     }
@@ -100,8 +103,8 @@ void externalSorter<T>::sequentialStringGenerator() {
             while (infile >> t_value)
                 cout << t_value << ' ';
             cout << endl;
+            infile.close();
         }
-        infile.close();
         cout << "\n# 以上是生成的顺串\n";
     }
 }
@@ -124,12 +127,10 @@ void externalSorter<T>::sortAndOutput() {
     // 设置读取文件流
     ifstream infile;
     for (int i = 1; i <= numbersOfSequentialString; i++) {
-        infile.open(fileToSort.sourcePath + to_string(i) + ".txt");
+        infile.open(fileToSort.targetPath + to_string(i) + ".txt");
         for (int j = 0; j < lines; j++) {
             // 将文件读入缓存区，读满/完为止
-            if (!infile.eof())
-                infile >> buffer[j][i];
-            else { 
+            if (!(infile >> buffer[j][i])) {
                 buffer[j][i] = INT_MAX;
                 break;
             }
@@ -156,14 +157,12 @@ void externalSorter<T>::sortAndOutput() {
             supportLoserTree.rePlay(winner, buffer[++indexOf[winner]][winner]);
         // 如果当前winner所在缓冲区已经全部读取完，需要清空重新读入新的一列
         else {
-            infile.open(fileToSort.sourcePath + to_string(winner) + ".txt");
+            infile.open(fileToSort.targetPath + to_string(winner) + ".txt");
             // 设置指针位置，恢复到上次读取文件末尾数据的下一个位置
             infile.seekg(points[winner]);
             for (int i = 0; i < lines; i++) {
                 // 将新的一批数据读入缓存区
-                if (!infile.eof())
-                    infile >> buffer[i][winner];
-                else {
+                if (!(infile >> buffer[i][winner])) {
                     buffer[i][winner] = INT_MAX;
                     break;
                 }

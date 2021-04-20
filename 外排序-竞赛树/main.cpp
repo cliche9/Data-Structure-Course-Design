@@ -7,7 +7,8 @@ int main() {
     string inFilename;
     cout << "请输入你要进行排序的文件名称: ";
     cin >> inFilename;
-    fileLog fileToSort(rootDirectory + inFilename, rootDirectory + "resultOf" + inFilename);
+
+    fileLog fileToSort(rootDirectory + "input/" + inFilename, rootDirectory + "output/" + inFilename);
     int bufferSize = 0;
     cout << "请输入缓冲区可存放元素个数: ";
     cin >> bufferSize;

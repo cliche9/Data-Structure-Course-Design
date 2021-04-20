@@ -7,10 +7,10 @@ template <class T>
 class minLoserTree {
 public:
     minLoserTree(T *thePlayers, int theNumberOfPlayers) {
-        tree = NULL;
+        tree = winners = NULL;
         initialize(thePlayers, theNumberOfPlayers);
     }
-    ~minLoserTree() { delete[] tree; }
+    ~minLoserTree() { delete[] tree; delete[] winners; }
     void initialize(T *, int);
     int winner() const { return tree[0]; }
     int loser(int i) const { return (i < numberOfPlayers) ? tree[i] : 0; };

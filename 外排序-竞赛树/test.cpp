@@ -3,12 +3,14 @@
 
 int main () {
 
-  std::ifstream is("data/example.txt");   // open file
+  std::ifstream is("data/input/example.txt");   // open file
 
-  char c;
-  while (is.get(c))                  // loop getting single characters
-    std::cout << is.tellg() << std::endl << c << std::endl;
-
+  int c;
+  std::cout << is.tellg() << std::endl;
+  while (is >> c)                  // loop getting single characters
+    std::cout << "pre_index: " << is.tellg() << std::endl << "value: " << c << std::endl << "index: " << is.tellg() << std::endl;
+  
+  std::cout << c << std::endl;
   if (is.eof())                      // check for EOF
     std::cout << is.tellg() << "[EoF reached]\n";
   else
