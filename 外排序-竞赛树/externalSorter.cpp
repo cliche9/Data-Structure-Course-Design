@@ -112,72 +112,95 @@ void externalSorter<T>::sequentialStringGenerator() {
 template <class T>
 void externalSorter<T>::sortAndOutput() {
     // 生成缓冲区
-    while (bufferSize < numbersOfSequentialString + 1) {
+    while (bufferSize < numbersOfSequentialString) {
         cout << "缓冲区空间不足, 请更新缓冲区大小, 大小至少为: " << numbersOfSequentialString << "\n请输入缓冲区可存放元素个数: ";
         cin >> bufferSize;
     }
-    // 设置位置记录器
-    int points[numbersOfSequentialString + 1];
-    // 计算每个顺串拥有的缓存区大小
-    int lines = bufferSize / numbersOfSequentialString;
-    // 设置缓存区
-    T **buffer = new T*[lines];
-    for (int i = 0; i < lines; i++)
-        buffer[i] = new T[numbersOfSequentialString + 1];
-    // 设置读取文件流
     ifstream infile;
-    for (int i = 1; i <= numbersOfSequentialString; i++) {
-        infile.open(fileToSort.targetPath + to_string(i) + ".txt");
-        for (int j = 0; j < lines; j++) {
-            // 将文件读入缓存区，读满/完为止
-            if (!(infile >> buffer[j][i])) {
-                buffer[j][i] = INT_MAX;
-                break;
-            }
-        }
-        // 记录下一次读取文件时的开始位置
-        points[i] = infile.tellg();
-        infile.close();
-    }
-    // 生成辅助败者树
-    minLoserTree<T> supportLoserTree(buffer[0], numbersOfSequentialString);
-    // 败者树循环生成最终结果
-    int winner = 0;
-    int indexOf[numbersOfSequentialString + 1];
-    memset(indexOf, 0, sizeof(indexOf));
     ofstream outfile;
-    while (buffer[indexOf[supportLoserTree.winner()]][supportLoserTree.winner()] != INT_MAX) {
-        // 循环，直到最终赢者为INT_MAX
-        winner = supportLoserTree.winner();
-        int winnerValue = buffer[indexOf[winner]][winner];            
-        outfile.open(fileToSort.targetPath + ".txt", ios::app);
-        outfile << winnerValue << ' ';
-        // 当前缓冲区没有读取完，所以将下一个元素替换当前胜者，重构输者树，该情况包括了文件读取完的情况，前面设置了INT_MAX作为标记
-        if (indexOf[winner] + 1 < lines)
-            supportLoserTree.rePlay(winner, buffer[++indexOf[winner]][winner]);
-        // 如果当前winner所在缓冲区已经全部读取完，需要清空重新读入新的一列
-        else {
-            infile.open(fileToSort.targetPath + to_string(winner) + ".txt");
-            // 设置指针位置，恢复到上次读取文件末尾数据的下一个位置
-            infile.seekg(points[winner]);
-            for (int i = 0; i < lines; i++) {
-                // 将新的一批数据读入缓存区
-                if (!(infile >> buffer[i][winner])) {
-                    buffer[i][winner] = INT_MAX;
+    // 检验特殊情况-只有一个顺串，直接输出即可
+    if (numbersOfSequentialString == 1) {
+        T *buffer = new T[bufferSize + 1];
+        infile.open(fileToSort.targetPath + "1.txt");
+        outfile.open(fileToSort.targetPath + ".txt");
+        int i = 1;
+        while (buffer[i] != INT_MAX) {
+            for (i = 1; i <= bufferSize; i++) {
+                if (!(infile >> buffer[i])) {
+                    buffer[i] = INT_MAX;
                     break;
                 }
             }
-            // 记录下一次读取文件的开始位置
-            points[winner] = infile.tellg();
-            infile.close();
-            indexOf[winner] = 0;
-            supportLoserTree.rePlay(winner, buffer[0][winner]);
+            // 是否将缓冲区填满，填满则说明可以继续读取，否则说明文件已经读取完了，两种情况都要输出到文件
+            for (int j = 1; j < i; j++)
+                outfile << buffer[j] << ' ';
         }
-        outfile.close();        
+        infile.close();
+        outfile.close();
+        delete[] buffer;
     }
-    for (int i = 0; i < lines; i++)
-        delete[] buffer[i];
-    delete[] buffer;
+    else {
+        // 设置位置记录器
+        int points[numbersOfSequentialString + 1];
+        // 计算每个顺串拥有的缓存区大小
+        int lines = bufferSize / numbersOfSequentialString;
+        // 设置缓存区
+        T **buffer = new T*[lines];
+        for (int i = 0; i < lines; i++)
+            buffer[i] = new T[numbersOfSequentialString + 1];
+        // 设置读取文件流
+        for (int i = 1; i <= numbersOfSequentialString; i++) {
+            infile.open(fileToSort.targetPath + to_string(i) + ".txt");
+            for (int j = 0; j < lines; j++) {
+                // 将文件读入缓存区，读满/完为止
+                if (!(infile >> buffer[j][i])) {
+                    buffer[j][i] = INT_MAX;
+                    break;
+                }
+            }
+            // 记录下一次读取文件时的开始位置
+            points[i] = infile.tellg();
+            infile.close();
+        }
+        // 生成辅助败者树
+        minLoserTree<T> supportLoserTree(buffer[0], numbersOfSequentialString);
+        // 败者树循环生成最终结果
+        int winner = 0;
+        int indexOf[numbersOfSequentialString + 1];
+        memset(indexOf, 0, sizeof(indexOf));
+        while (buffer[indexOf[supportLoserTree.winner()]][supportLoserTree.winner()] != INT_MAX) {
+            // 循环，直到最终赢者为INT_MAX
+            winner = supportLoserTree.winner();
+            int winnerValue = buffer[indexOf[winner]][winner];            
+            outfile.open(fileToSort.targetPath + ".txt", ios::app);
+            outfile << winnerValue << ' ';
+            // 当前缓冲区没有读取完，所以将下一个元素替换当前胜者，重构输者树，该情况包括了文件读取完的情况，前面设置了INT_MAX作为标记
+            if (indexOf[winner] + 1 < lines)
+                supportLoserTree.rePlay(winner, buffer[++indexOf[winner]][winner]);
+            // 如果当前winner所在缓冲区已经全部读取完，需要清空重新读入新的一列
+            else {
+                infile.open(fileToSort.targetPath + to_string(winner) + ".txt");
+                // 设置指针位置，恢复到上次读取文件末尾数据的下一个位置
+                infile.seekg(points[winner]);
+                for (int i = 0; i < lines; i++) {
+                    // 将新的一批数据读入缓存区
+                    if (!(infile >> buffer[i][winner])) {
+                        buffer[i][winner] = INT_MAX;
+                        break;
+                    }
+                }
+                // 记录下一次读取文件的开始位置
+                points[winner] = infile.tellg();
+                infile.close();
+                indexOf[winner] = 0;
+                supportLoserTree.rePlay(winner, buffer[0][winner]);
+            }
+            outfile.close();        
+        }
+        for (int i = 0; i < lines; i++)
+            delete[] buffer[i];
+        delete[] buffer;
+    }
     // 排序结束，输出结果
     cout << "外排序成功, 是否需要输出排序结果? (Y/N)\n";
     char tag;
