@@ -14,6 +14,7 @@ int main() {
     cin >> bufferSize;
     externalSorter<int> sorter(bufferSize, fileToSort);
     sorter.sortAndOutput();
+    cout << "\n# 外排序结束, 总的访存次数为: " << sorter.fileDistVisitTimes() << endl;
     
     return 0;
 }

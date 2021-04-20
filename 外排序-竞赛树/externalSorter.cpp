@@ -20,10 +20,12 @@ struct sequentialStringElement {
 
 // 文件读取记录
 struct fileLog {
-    fileLog(string sPath, string tPath): sourcePath(sPath), targetPath(tPath), visitDiskLog(0) {}
+    fileLog(string sPath, string tPath): sourcePath(sPath), targetPath(tPath), visitDiskTimesOfStringGenerator(0), visitDiskTimesOfOutput(0), totalVisitDiskTimes(0) {}
     string sourcePath;
     string targetPath;
-    int visitDiskLog;
+    int visitDiskTimesOfStringGenerator;
+    int visitDiskTimesOfOutput;
+    int totalVisitDiskTimes;
 };
 
 // 外排序器
@@ -32,6 +34,7 @@ class externalSorter {
 public:
     externalSorter(int bufferSize, fileLog file);
     void sortAndOutput();
+    int fileDistVisitTimes() const { return fileToSort.totalVisitDiskTimes; }
 private:
     int bufferSize;
     int numbersOfSequentialString;
@@ -64,6 +67,8 @@ void externalSorter<T>::sequentialStringGenerator() {
         int t_value = 0;
         if (!(infile >> t_value))
             t_value = INT_MAX;
+        // 访存次数
+        ++fileToSort.visitDiskTimesOfStringGenerator;
         buffer_s[i].key = 1;
         buffer_s[i].value = t_value;
     }
@@ -83,9 +88,11 @@ void externalSorter<T>::sequentialStringGenerator() {
         outfile.open(fileToSort.targetPath + to_string(sequentialTag) + ".txt", ios::app);
         // 输出到对应文件
         outfile << buffer_s[winner].value << ' ';
+        ++fileToSort.visitDiskTimesOfStringGenerator;
         // 从源文件继续读取
         if (!(infile >> s.value))
             s.value = INT_MAX;
+        ++fileToSort.visitDiskTimesOfStringGenerator;
         s.key = (s.value < buffer_s[winner].value || s.value == INT_MAX) ? sequentialTag + 1 : sequentialTag;
         supportLoserTree.rePlay(winner, s);
         outfile.close();
@@ -106,7 +113,7 @@ void externalSorter<T>::sequentialStringGenerator() {
             cout << endl;
             infile.close();
         }
-        cout << "\n# 以上是生成的顺串\n";
+        cout << "\n# 以上是生成的顺串, 该阶段的访存次数为: " << fileToSort.visitDiskTimesOfStringGenerator << endl;
     }
 }
 
@@ -128,13 +135,17 @@ void externalSorter<T>::sortAndOutput() {
         while (buffer[i] != INT_MAX) {
             for (i = 1; i <= bufferSize; i++) {
                 if (!(infile >> buffer[i])) {
+                    ++fileToSort.visitDiskTimesOfOutput;
                     buffer[i] = INT_MAX;
                     break;
                 }
+                ++fileToSort.visitDiskTimesOfOutput;
             }
             // 是否将缓冲区填满，填满则说明可以继续读取，否则说明文件已经读取完了，两种情况都要输出到文件
-            for (int j = 1; j < i; j++)
+            for (int j = 1; j < i; j++) {
                 outfile << buffer[j] << ' ';
+                ++fileToSort.visitDiskTimesOfOutput;
+            }
         }
         infile.close();
         outfile.close();
@@ -155,9 +166,11 @@ void externalSorter<T>::sortAndOutput() {
             for (int j = 0; j < lines; j++) {
                 // 将文件读入缓存区，读满/完为止
                 if (!(infile >> buffer[j][i])) {
+                    ++fileToSort.visitDiskTimesOfOutput;
                     buffer[j][i] = INT_MAX;
                     break;
                 }
+                ++fileToSort.visitDiskTimesOfOutput;
             }
             // 记录下一次读取文件时的开始位置
             points[i] = infile.tellg();
@@ -169,12 +182,15 @@ void externalSorter<T>::sortAndOutput() {
         int winner = 0;
         int indexOf[numbersOfSequentialString + 1];
         memset(indexOf, 0, sizeof(indexOf));
+
         while (buffer[indexOf[supportLoserTree.winner()]][supportLoserTree.winner()] != INT_MAX) {
             // 循环，直到最终赢者为INT_MAX
             winner = supportLoserTree.winner();
             int winnerValue = buffer[indexOf[winner]][winner];            
             outfile.open(fileToSort.targetPath + ".txt", ios::app);
+            // 输出，访存次数++
             outfile << winnerValue << ' ';
+            ++fileToSort.visitDiskTimesOfOutput;
             // 当前缓冲区没有读取完，所以将下一个元素替换当前胜者，重构输者树，该情况包括了文件读取完的情况，前面设置了INT_MAX作为标记
             if (indexOf[winner] + 1 < lines)
                 supportLoserTree.rePlay(winner, buffer[++indexOf[winner]][winner]);
@@ -186,9 +202,11 @@ void externalSorter<T>::sortAndOutput() {
                 for (int i = 0; i < lines; i++) {
                     // 将新的一批数据读入缓存区
                     if (!(infile >> buffer[i][winner])) {
+                        ++fileToSort.visitDiskTimesOfOutput;
                         buffer[i][winner] = INT_MAX;
                         break;
                     }
+                    ++fileToSort.visitDiskTimesOfOutput;
                 }
                 // 记录下一次读取文件的开始位置
                 points[winner] = infile.tellg();
@@ -202,6 +220,7 @@ void externalSorter<T>::sortAndOutput() {
             delete[] buffer[i];
         delete[] buffer;
     }
+    fileToSort.totalVisitDiskTimes = fileToSort.visitDiskTimesOfOutput + fileToSort.visitDiskTimesOfStringGenerator;
     // 排序结束，输出结果
     cout << "外排序成功, 是否需要输出排序结果? (Y/N)\n";
     char tag;
@@ -219,6 +238,6 @@ void externalSorter<T>::sortAndOutput() {
             count++;
         }
         infile.close();
-        cout << "\n# 以上是外排序的结果\n";
+        cout << "\n# 以上是外排序的结果, 该阶段的访存次数为: " << fileToSort.visitDiskTimesOfOutput << endl;
     }
 }
