@@ -64,8 +64,8 @@ void externalSorter<T>::sequentialStringGenerator() {
     cout << "正在构建顺串...\n";
     // 生成缓存区
     // 多一个空间，是为了构建败者树，为了模拟缓存区
-    sequentialStringElement<T> *buffer_s = new sequentialStringElement<T>[bufferSize + 1];
-    for (int i = 1; i <= bufferSize; i++) {
+    sequentialStringElement<T> *buffer_s = new sequentialStringElement<T>[bufferSize / 2 + 1];
+    for (int i = 1; i <= bufferSize / 2; i++) {
         int t_value = 0;
         if (!(infile >> t_value))
             t_value = INT_MAX;
@@ -75,7 +75,7 @@ void externalSorter<T>::sequentialStringGenerator() {
     // 初始化选手数组，访存1次
     ++fileToSort.visitDiskTimesOfStringGenerator;
     // 生成辅助败者树
-    minLoserTree<sequentialStringElement<T> > supportLoserTree(buffer_s, bufferSize);
+    minLoserTree<sequentialStringElement<T> > supportLoserTree(buffer_s, bufferSize / 2);
     // 将顺串生成到多个小文件中，编号为1-n
     int winner = 0;
     sequentialStringElement<T> s;
