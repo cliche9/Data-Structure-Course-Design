@@ -61,66 +61,6 @@ void minLoserTree<T>::play(int p, int leftChild, int rightChild) {
     }
 }
 
-/*
-template <class T>
-void minLoserTree<T>::rePlay(int thePlayer) {
-    // thePlayer的比赛重赛
-    int n = numberOfPlayers;
-    if (thePlayer <= 0 || thePlayer > n)
-        throw illegalParameterValue("Player index is illegal");
-    
-    int matchNode, leftChild, rightChild;
-
-    // 找到第一场比赛和它的孩子
-    if (thePlayer <= lowExt) {
-        // 从最底层开始
-        matchNode = (offset + thePlayer) / 2;
-        leftChild = 2 * matchNode - offset;
-        rightChild = leftChild + 1;
-    }
-    else {
-        matchNode = (thePlayer - lowExt + n - 1) / 2;
-        if (2 * matchNode == n - 1) {
-            leftChild = tree[2 * matchNode];
-            rightChild = thePlayer;
-        }
-        else {
-            leftChild = 2 * matchNode - n + 1 + lowExt;
-            rightChild = leftChild + 1;
-        }
-    }
-
-    if (tree[matchNode] != thePlayer) {
-        winners[matchNode] = (players[tree[matchNode]] <= players[thePlayer]) ? tree[matchNode] : thePlayer;
-        tree[matchNode] = (players[tree[matchNode]] <= players[thePlayer]) ? thePlayer : tree[matchNode];
-        // 改变的是赢者，整个过程可以简单一些
-        for (; matchNode >= 1; matchNode /= 2) {
-            winners[matchNode / 2] = (players[tree[matchNode - 1]] <= players[matchNode]) ? tree[matchNode - 1] : tree[matchNode];
-            tree[matchNode / 2] = (players[tree[matchNode - 1]] <= players[matchNode]) ? tree[matchNode] : tree[matchNode - 1];
-        }
-    }
-    else {
-        // 改变的是输者，只要输者有一次比赛不改变结果就可以结束了，不用继续更新
-        // 第一次比赛
-        tree[matchNode] = (players[leftChild] <= players[rightChild]) ? rightChild : leftChild;
-        winners[matchNode] = (players[leftChild] <= players[rightChild]) ? leftChild : rightChild;
-        if (tree[matchNode] == thePlayer)
-            return;
-        
-        // 第二次比赛 特殊情况
-        if (matchNode == n - 1 && n % 2 == 1) {
-            matchNode /= 2;
-            winners[matchNode] = (players[winners[n - 1]] <= players[lowExt + 1]) ? winners[n - 1] : lowExt + 1;
-            tree[matchNode] = (players[winners[n - 1]] <= players[lowExt + 1]) ? lowExt + 1 : winners[n - 1];
-            if (tree[matchNode] == )
-        }
-
-        // 剩余的比赛
-
-    }
-}
-*/
-
 template <class T>
 void minLoserTree<T>::rePlay(int thePlayer, T newElement) {
     // 外排序中重赛的永远是最后赢者，所以不需要考虑赢者树了
