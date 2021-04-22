@@ -384,8 +384,6 @@ void externalSorter<T>::kWaySortAndOutput() {
                     outfile.close();
                 }
             }
-            // 更新顺串数目
-            numbersOfSequentialString /= mergeWays;
             // 完成了对所有整组的顺串归并后，可能会剩下一个路数不足mergeWays的顺串，需要单独进行处理
             if (numbersOfSequentialString % mergeWays) {
                 // 不能整除，说明有剩下的一组顺串不足k个
@@ -456,7 +454,7 @@ void externalSorter<T>::kWaySortAndOutput() {
                         indexOf[winner] = 0;
                         supportLoserTree.rePlay(winner, buffer[0][winner]);
                     }
-            }
+                }
                 // 完成上述过程，需要将输出缓存区内容全部输出到文件里
                 if (indexOf[0]) {
                     // 如果输出缓存区有内容
@@ -469,11 +467,11 @@ void externalSorter<T>::kWaySortAndOutput() {
                     ++fileToSort.visitDiskTimesOfOutput;
                     outfile.close();
                 }
-                // 余下的一组生成一个顺串
-                ++numbersOfSequentialString;
             }
             // 新一轮merge
             ++mergeRound;
+            // 更新顺串数目
+            numbersOfSequentialString = (numbersOfSequentialString % mergeWays) ? numbersOfSequentialString / mergeWays : numbersOfSequentialString / mergeWays + 1;
         }
         // delete
         for (int i = 0; i < lines; i++)
