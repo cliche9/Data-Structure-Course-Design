@@ -33,7 +33,7 @@ template <class T>
 class externalSorter {
 public:
     externalSorter(int bufferSize, fileLog file);
-    void sortAndOutput(char tag = '0');
+    void allWaySortAndOutput();
     void kWaySortAndOutput();
     int fileDistVisitTimes() const { return fileToSort.totalVisitDiskTimes; }
     void outputResult() const;
@@ -42,6 +42,7 @@ private:
     int numbersOfSequentialString;
     fileLog fileToSort;
     void sequentialStringGenerator();
+    void sortSequentialStringsByGroup(int mergeWays, int start, int end, int mergeRound, int sequentialGroupNumber);
 };
 
 template <class T>
@@ -122,10 +123,11 @@ void externalSorter<T>::sequentialStringGenerator() {
 
 // 缓存区需要留出输出部分，否则一次一次输出内外存读取实在是太耗时间了
 template <class T>
-void externalSorter<T>::sortAndOutput(char tag) {
+void externalSorter<T>::sortSequentialStringsByGroup(int mergeWays, int start, int end, int mergeRound, int sequentialGroupNumber) {
+    // 参数说明: mergeWays = 归并参与的顺串数目 , start = 归并顺串号起始位置, end = 归并顺串号结束位置, mergeRound = 当前归并轮次, sequentialGroupNumber = 当前一组顺串的组号
     // 生成缓冲区
-    while (bufferSize < numbersOfSequentialString + 1) {
-        cout << "缓冲区空间不足, 请更新缓冲区大小, 大小至少为: " << numbersOfSequentialString + 1 << "\n请输入缓冲区可存放元素个数: ";
+    while (bufferSize < mergeWays + 1) {
+        cout << "缓冲区空间不足, 请更新缓冲区大小, 大小至少为: " << mergeWays + 1 << "\n请输入缓冲区可存放元素个数: ";
         cin >> bufferSize;
     }
     ifstream infile;
@@ -133,7 +135,7 @@ void externalSorter<T>::sortAndOutput(char tag) {
     // 检验特殊情况-只有一个顺串，直接输出即可
     if (numbersOfSequentialString == 1) {
         T *buffer = new T[bufferSize + 1];
-        infile.open(fileToSort.targetPath + '_' + tag + "_1.out");
+        infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + "_1.out");
         outfile.open(fileToSort.targetPath + ".out");
         int i = 1;
         while (buffer[i] != INT_MAX) {
@@ -154,97 +156,124 @@ void externalSorter<T>::sortAndOutput(char tag) {
         infile.close();
         outfile.close();
         delete[] buffer;
+        return;
     }
-    else {
-        // 设置位置记录器
-        int points[numbersOfSequentialString + 1];
-        // 计算每个顺串拥有的缓存区大小，此处顺串数目+1，目的是为了给输出区域分出一定空间
-        int lines = bufferSize / (numbersOfSequentialString + 1);
-        // 设置缓存区
-        T **buffer = new T*[lines];
-        for (int i = 0; i < lines; i++)
-            // 设置+1，此时buffer[i][0]表示输出区域，填满即输出
-            buffer[i] = new T[numbersOfSequentialString + 1];
-
-        // 设置读取文件流
-        for (int i = 1; i <= numbersOfSequentialString; i++) {
-            infile.open(fileToSort.targetPath + '_' + tag + '_' + to_string(i) + ".out");
-            for (int j = 0; j < lines; j++) {
-                // 将文件读入缓存区，读满/完为止
-                if (!(infile >> buffer[j][i])) {
-                    buffer[j][i] = INT_MAX;
+    // 归并路数为1 --- 此处归并路数是指这一次归并的顺串数目
+    if (mergeWays == 1) {
+        T *buffer = new T[bufferSize + 1];
+        infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(start) + ".out");
+        outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroupNumber) + ".out", ios::app);
+        int i = 1;
+        while (buffer[i] != INT_MAX) {
+            // 填满一次缓存区/读取一次文件记一次文件读取
+            ++fileToSort.visitDiskTimesOfOutput;
+            for (i = 1; i <= bufferSize; i++) {
+                if (!(infile >> buffer[i])) {
+                    buffer[i] = INT_MAX;
                     break;
                 }
             }
+            // 是否将缓冲区填满，填满则说明可以继续读取，否则说明文件已经读取完了，两种情况都要输出到文件
+            for (int j = 1; j < i; j++)
+                outfile << buffer[j] << ' ';
+            // 清空一次缓存区/输出一次文件记一次文件读取
             ++fileToSort.visitDiskTimesOfOutput;
-            // 记录下一次读取文件时的开始位置
-            points[i] = infile.tellg();
-            infile.close();
         }
-        // 生成辅助败者树
-        minLoserTree<T> supportLoserTree(buffer[0], numbersOfSequentialString);
-        // 败者树循环生成最终结果
-        int winner = 0;
-        int indexOf[numbersOfSequentialString + 1];
-        memset(indexOf, 0, sizeof(indexOf));
+        infile.close();
+        outfile.close();
+        delete[] buffer;
+        return;
+    }
+    // 归并路大于1，进行多路归并
+    // 设置位置记录器
+    int points[mergeWays + 1];
+    // 计算每个顺串拥有的缓存区大小，此处顺串数目+1，目的是为了给输出区域分出一定空间
+    int lines = bufferSize / (mergeWays + 1);
+    // 设置缓存区
+    T **buffer = new T*[lines];
+    for (int i = 0; i < lines; i++)
+        // 设置+1，此时buffer[i][0]表示输出区域，填满即输出
+        buffer[i] = new T[mergeWays + 1];
 
-        while (buffer[indexOf[supportLoserTree.winner()]][supportLoserTree.winner()] != INT_MAX) {
-            // 循环，直到最终赢者为INT_MAX
-            winner = supportLoserTree.winner();
-            // 将输者树赢者在缓存区存放位置的值(winnerValue)放入输出缓存区
-            buffer[indexOf[0]++][0] = buffer[indexOf[winner]][winner];       
-            // buffer[i][0]是输出缓存区，indexOf[0]记录这一列的当前位置，当indexOf[0] == lines时，说明输出缓存区满了，这时候输出到文件
-            if (indexOf[0] == lines) {
-                outfile.open(fileToSort.targetPath + ".out", ios::app);
-                // 输出到文件
-                for (int i = 0; i < lines; i++)
-                    outfile << buffer[i][0] << ' ';
-                indexOf[0] = 0;
-                ++fileToSort.visitDiskTimesOfOutput;
-                outfile.close();
-            }
-            // 当前缓冲区没有读取完，所以将下一个元素替换当前胜者，重构输者树，该情况包括了文件读取完的情况，前面设置了INT_MAX作为标记
-            if (indexOf[winner] + 1 < lines)
-                supportLoserTree.rePlay(winner, buffer[++indexOf[winner]][winner]);
-            // 如果当前winner所在缓冲区已经全部读取完，需要清空重新读入新的一列
-            else {
-                infile.open(fileToSort.targetPath + '_' + tag + '_' + to_string(winner) + ".out");
-                // 设置指针位置，恢复到上次读取文件末尾数据的下一个位置
-                infile.seekg(points[winner]);
-                for (int i = 0; i < lines; i++) {
-                    // 将新的一批数据读入缓存区
-                    if (!(infile >> buffer[i][winner])) {
-                        buffer[i][winner] = INT_MAX;
-                        break;
-                    }
-                }
-                // 重新读入新的一列，访问文件
-                ++fileToSort.visitDiskTimesOfOutput;
-                // 记录下一次读取文件的开始位置
-                points[winner] = infile.tellg();
-                infile.close();
-                indexOf[winner] = 0;
-                supportLoserTree.rePlay(winner, buffer[0][winner]);
+    // 设置读取文件流
+    for (int i = start; i <= end; i++) {
+        infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(i) + ".out");
+        int pos = 1;
+        for (int j = 0; j < lines; j++) {
+            // 将文件读入缓存区，读满/完为止
+            if (!(infile >> buffer[j][pos])) {
+                buffer[j][pos] = INT_MAX;
+                break;
             }
         }
-        // 完成上述过程，需要将输出缓存区内容全部输出到文件里
-        if (indexOf[0]) {
-            // 如果输出缓存区有内容
-            outfile.open(fileToSort.targetPath + ".out", ios::app);
-            // 输出到文件，此时结尾是indexOf[0]
-            for (int i = 0; i < indexOf[0]; i++)
+        ++fileToSort.visitDiskTimesOfOutput;
+        // 记录下一次读取文件时的开始位置
+        points[pos] = infile.tellg();
+        infile.close();
+        pos++;
+    }
+    // 生成辅助败者树
+    minLoserTree<T> supportLoserTree(buffer[0], mergeWays);
+    // 败者树循环生成最终结果
+    int winner = 0;
+    int indexOf[mergeWays + 1];
+    memset(indexOf, 0, sizeof(indexOf));
+
+    while (buffer[indexOf[supportLoserTree.winner()]][supportLoserTree.winner()] != INT_MAX) {
+        // 循环，直到最终赢者为INT_MAX
+        winner = supportLoserTree.winner();
+        // 将输者树赢者在缓存区存放位置的值(winnerValue)放入输出缓存区
+        buffer[indexOf[0]++][0] = buffer[indexOf[winner]][winner];       
+        // buffer[i][0]是输出缓存区，indexOf[0]记录这一列的当前位置，当indexOf[0] == lines时，说明输出缓存区满了，这时候输出到文件
+        if (indexOf[0] == lines) {
+            outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroupNumber) + ".out", ios::app);
+            // 输出到文件
+            for (int i = 0; i < lines; i++)
                 outfile << buffer[i][0] << ' ';
             indexOf[0] = 0;
-            // 访存一次
             ++fileToSort.visitDiskTimesOfOutput;
             outfile.close();
         }
-
-        for (int i = 0; i < lines; i++)
-            delete[] buffer[i];
-        delete[] buffer;
+        // 当前缓冲区没有读取完，所以将下一个元素替换当前胜者，重构输者树，该情况包括了文件读取完的情况，前面设置了INT_MAX作为标记
+        if (indexOf[winner] + 1 < lines)
+            supportLoserTree.rePlay(winner, buffer[++indexOf[winner]][winner]);
+        // 如果当前winner所在缓冲区已经全部读取完，需要清空重新读入新的一列
+        else {
+            infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(start - 1 + winner) + ".out");
+            // 设置指针位置，恢复到上次读取文件末尾数据的下一个位置
+            infile.seekg(points[winner]);
+            for (int i = 0; i < lines; i++) {
+                // 将新的一批数据读入缓存区
+                if (!(infile >> buffer[i][winner])) {
+                    buffer[i][winner] = INT_MAX;
+                    break;
+                }
+            }
+            // 重新读入新的一列，访问文件
+            ++fileToSort.visitDiskTimesOfOutput;
+            // 记录下一次读取文件的开始位置
+            points[winner] = infile.tellg();
+            infile.close();
+            indexOf[winner] = 0;
+            supportLoserTree.rePlay(winner, buffer[0][winner]);
+        }
     }
-    fileToSort.totalVisitDiskTimes = fileToSort.visitDiskTimesOfOutput + fileToSort.visitDiskTimesOfStringGenerator;
+    // 完成上述过程，需要将输出缓存区内容全部输出到文件里
+    if (indexOf[0]) {
+        // 如果输出缓存区有内容
+        outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroupNumber) + ".out", ios::app);
+        // 输出到文件，此时结尾是indexOf[0]
+        for (int i = 0; i < indexOf[0]; i++)
+            outfile << buffer[i][0] << ' ';
+        indexOf[0] = 0;
+        // 访存一次
+        ++fileToSort.visitDiskTimesOfOutput;
+        outfile.close();
+    }
+
+    for (int i = 0; i < lines; i++)
+        delete[] buffer[i];
+    delete[] buffer;
 }
 
 template <class T>
@@ -264,224 +293,30 @@ void externalSorter<T>::kWaySortAndOutput() {
     }
     ifstream infile;
     ofstream outfile;
-    // 检验特殊情况-只有一个顺串，直接输出即可
-    if (numbersOfSequentialString == 1) {
-        T *buffer = new T[bufferSize + 1];
-        infile.open(fileToSort.targetPath + "_0_1.out");
-        outfile.open(fileToSort.targetPath + ".out");
-        int i = 1;
-        while (buffer[i] != INT_MAX) {
-            // 填满一次缓存区/读取一次文件记一次文件读取
-            ++fileToSort.visitDiskTimesOfOutput;
-            for (i = 1; i <= bufferSize; i++) {
-                if (!(infile >> buffer[i])) {
-                    buffer[i] = INT_MAX;
-                    break;
-                }
-            }
-            // 是否将缓冲区填满，填满则说明可以继续读取，否则说明文件已经读取完了，两种情况都要输出到文件
-            for (int j = 1; j < i; j++)
-                outfile << buffer[j] << ' ';
-            // 清空一次缓存区/输出一次文件记一次文件读取
-            ++fileToSort.visitDiskTimesOfOutput;
+    // 循环直到顺串数目为0
+    int mergeRound = 0;
+    while (numbersOfSequentialString > 1) {
+        int mergeGroup = (numbersOfSequentialString % mergeWays) ? numbersOfSequentialString / mergeWays + 1 : numbersOfSequentialString / mergeWays;
+        // 设置函数参数即可
+        for (int i = 1; i <= mergeGroup; i++) {
+            int numbersOfString = (numbersOfSequentialString - i * mergeWays > 0) ? mergeWays : (numbersOfSequentialString - (i - 1) * mergeWays);
+            sortSequentialStringsByGroup(numbersOfString, (i - 1) * mergeWays + 1, (i - 1) * mergeWays + numbersOfString, mergeRound, i);
         }
-        infile.close();
-        outfile.close();
-        delete[] buffer;
+        ++mergeRound;
+        numbersOfSequentialString = mergeGroup;
     }
-    else {
-        // 设置位置记录器
-        int points[mergeWays + 1];
-        // 计算每个归并路拥有的缓存区大小，此处归并路数目+1，目的是为了给输出区域分出一定空间
-        int lines = bufferSize / (mergeWays + 1);
-        // 设置缓存区
-        T **buffer = new T*[lines];
-        for (int i = 0; i < lines; i++)
-            // 设置+1，此时buffer[i][0]表示输出区域，填满即输出
-            buffer[i] = new T[mergeWays + 1];
-
-        int mergeRound = 0;
-        // 循环k路归并，直到顺串数目不大于k
-        while (numbersOfSequentialString > mergeWays) {
-            // 每一轮k路归并，都需要进入循环，直到该轮剩余的顺串数目不大于k
-            // 将每一轮的顺串进行分组
-            for (int sequentialGroup = 1, groups = numbersOfSequentialString / mergeWays + 1; sequentialGroup < groups; sequentialGroup++) {
-                // pos用来遍历缓存区
-                int pos = 1;
-                // 找到每一组顺串的起点和终点
-                for (int i = (sequentialGroup - 1) * mergeWays + 1, end = sequentialGroup * mergeWays; i <= end; i++) {
-                    // 打开第mergeRound轮，第sequentialGroup组对应的顺串(使用i来遍历)
-                    infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(i) + ".out");
-                    for (int j = 0; j < lines; j++) {
-                        // 将文件读入缓存区，读满/完为止
-                        if (!(infile >> buffer[j][pos])) {
-                            buffer[j][pos] = INT_MAX;
-                            break;
-                        }
-                    }
-                    ++fileToSort.visitDiskTimesOfOutput;
-                    // 记录下一次读取文件时的开始位置
-                    points[pos] = infile.tellg();
-                    infile.close();
-                    pos++;
-                }
-                // 生成辅助败者树
-                minLoserTree<T> supportLoserTree(buffer[0], mergeWays);
-                // 败者树循环生成最终结果
-                int winner = 0;
-                int indexOf[mergeWays + 1];
-                memset(indexOf, 0, sizeof(indexOf));
-
-                while (buffer[indexOf[supportLoserTree.winner()]][supportLoserTree.winner()] != INT_MAX) {
-                    // 循环，直到最终赢者为INT_MAX
-                    winner = supportLoserTree.winner();
-                    // 将输者树赢者在缓存区存放位置的值(winnerValue)放入输出缓存区
-                    buffer[indexOf[0]++][0] = buffer[indexOf[winner]][winner];       
-                    // buffer[i][0]是输出缓存区，indexOf[0]记录这一列的当前位置，当indexOf[0] == lines时，说明输出缓存区满了，这时候输出到文件
-                    if (indexOf[0] == lines) {
-                        outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroup) + ".out", ios::app);
-                        // 输出到文件
-                        for (int i = 0; i < lines; i++)
-                            outfile << buffer[i][0] << ' ';
-                        indexOf[0] = 0;
-                        ++fileToSort.visitDiskTimesOfOutput;
-                        outfile.close();
-                    }
-                    // 当前缓冲区没有读取完，所以将下一个元素替换当前胜者，重构输者树，该情况包括了文件读取完的情况，前面设置了INT_MAX作为标记
-                    if (indexOf[winner] + 1 < lines)
-                        supportLoserTree.rePlay(winner, buffer[++indexOf[winner]][winner]);
-                    // 如果当前winner所在缓冲区已经全部读取完，需要清空重新读入新的一列
-                    else {
-                        infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string((sequentialGroup - 1) * mergeWays + winner) + ".out");
-                        // 设置指针位置，恢复到上次读取文件末尾数据的下一个位置
-                        infile.seekg(points[winner]);
-                        for (int i = 0; i < lines; i++) {
-                            // 将新的一批数据读入缓存区
-                            if (!(infile >> buffer[i][winner])) {
-                                buffer[i][winner] = INT_MAX;
-                                break;
-                            }
-                        }
-                        // 重新读入新的一列，访问文件
-                        ++fileToSort.visitDiskTimesOfOutput;
-                        // 记录下一次读取文件的开始位置
-                        points[winner] = infile.tellg();
-                        infile.close();
-                        indexOf[winner] = 0;
-                        supportLoserTree.rePlay(winner, buffer[0][winner]);
-                    }
-                }
-                // 完成上述过程，需要将输出缓存区内容全部输出到文件里
-                if (indexOf[0]) {
-                    // 如果输出缓存区有内容
-                    outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroup) + ".out", ios::app);
-                    // 输出到文件，此时结尾是indexOf[0]
-                    for (int i = 0; i < indexOf[0]; i++)
-                        outfile << buffer[i][0] << ' ';
-                    indexOf[0] = 0;
-                    // 访存一次
-                    ++fileToSort.visitDiskTimesOfOutput;
-                    outfile.close();
-                }
-            }
-            // 完成了对所有整组的顺串归并后，可能会剩下一个路数不足mergeWays的顺串，需要单独进行处理
-            if (numbersOfSequentialString % mergeWays) {
-                // 不能整除，说明有剩下的一组顺串不足k个
-                int pos = 1;
-                for (int i = (numbersOfSequentialString / mergeWays) * mergeWays + 1; i <= numbersOfSequentialString; i++) {
-                    // 打开第mergeRound轮，最后一组对应的顺串(使用i来遍历)
-                    infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(i) + ".out");
-                    for (int j = 0; j < lines; j++) {
-                        // 将文件读入缓存区，读满/完为止
-                        if (!(infile >> buffer[j][pos])) {
-                            buffer[j][pos] = INT_MAX;
-                            break;
-                        }
-                    }
-                    ++fileToSort.visitDiskTimesOfOutput;
-                    // 记录下一次读取文件时的开始位置
-                    points[pos] = infile.tellg();
-                    infile.close();
-                    pos++;
-                }
-                // 对于不足的顺串，用INT_MAX和-1来填充
-                for (; pos <= mergeWays; pos++) {
-                    buffer[0][pos] = INT_MAX;
-                    points[pos] = -1;
-                }
-                // 生成辅助败者树
-                minLoserTree<T> supportLoserTree(buffer[0], mergeWays);
-                int winner = 0;
-                int indexOf[mergeWays + 1];
-                int lastSequentialGroup = numbersOfSequentialString / mergeWays + 1;
-                memset(indexOf, 0, sizeof(indexOf));
-
-                while (buffer[indexOf[supportLoserTree.winner()]][supportLoserTree.winner()] != INT_MAX) {
-                    // 循环，直到最终赢者为INT_MAX
-                    winner = supportLoserTree.winner();
-                    // 将输者树赢者在缓存区存放位置的值(winnerValue)放入输出缓存区
-                    buffer[indexOf[0]++][0] = buffer[indexOf[winner]][winner];       
-                    // buffer[i][0]是输出缓存区，indexOf[0]记录这一列的当前位置，当indexOf[0] == lines时，说明输出缓存区满了，这时候输出到文件
-                    if (indexOf[0] == lines) {
-                        outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(lastSequentialGroup) + ".out", ios::app);
-                        // 输出到文件
-                        for (int i = 0; i < lines; i++)
-                            outfile << buffer[i][0] << ' ';
-                        indexOf[0] = 0;
-                        ++fileToSort.visitDiskTimesOfOutput;
-                        outfile.close();
-                    }
-                    // 当前缓冲区没有读取完，所以将下一个元素替换当前胜者，重构输者树，该情况包括了文件读取完的情况，前面设置了INT_MAX作为标记
-                    if (indexOf[winner] + 1 < lines)
-                        supportLoserTree.rePlay(winner, buffer[++indexOf[winner]][winner]);
-                    // 如果当前winner所在缓冲区已经全部读取完，需要清空重新读入新的一列
-                    else {
-                        infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string((lastSequentialGroup - 1) * mergeWays + winner) + ".out");
-                        // 设置指针位置，恢复到上次读取文件末尾数据的下一个位置
-                        infile.seekg(points[winner]);
-                        for (int i = 0; i < lines; i++) {
-                            // 将新的一批数据读入缓存区
-                            if (!(infile >> buffer[i][winner])) {
-                                buffer[i][winner] = INT_MAX;
-                                break;
-                            }
-                        }
-                        // 重新读入新的一列，访问文件
-                        ++fileToSort.visitDiskTimesOfOutput;
-                        // 记录下一次读取文件的开始位置
-                        points[winner] = infile.tellg();
-                        infile.close();
-                        indexOf[winner] = 0;
-                        supportLoserTree.rePlay(winner, buffer[0][winner]);
-                    }
-                }
-                // 完成上述过程，需要将输出缓存区内容全部输出到文件里
-                if (indexOf[0]) {
-                    // 如果输出缓存区有内容
-                    outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(lastSequentialGroup) + ".out", ios::app);
-                    // 输出到文件，此时结尾是indexOf[0]
-                    for (int i = 0; i < indexOf[0]; i++)
-                        outfile << buffer[i][0] << ' ';
-                    indexOf[0] = 0;
-                    // 访存一次
-                    ++fileToSort.visitDiskTimesOfOutput;
-                    outfile.close();
-                }
-            }
-            // 新一轮merge
-            ++mergeRound;
-            // 更新顺串数目
-            numbersOfSequentialString = (numbersOfSequentialString % mergeWays) ? numbersOfSequentialString / mergeWays : numbersOfSequentialString / mergeWays + 1;
-        }
-        // delete
-        for (int i = 0; i < lines; i++)
-            delete[] buffer[i];
-        delete[] buffer;
-        // 对顺串数目不大于k的情况朴素排序一次就能得到结果了
-        sortAndOutput(mergeRound + '0');
-    }
+    // 排序结束，得到总访存次数
     fileToSort.totalVisitDiskTimes = fileToSort.visitDiskTimesOfOutput + fileToSort.visitDiskTimesOfStringGenerator;
     // 排序结束，输出结果
+    fileToSort.targetPath += '_' + to_string(mergeRound) + "_1";
+    outputResult();
+}
+
+template <class T>
+void externalSorter<T>::allWaySortAndOutput() {
+    sortSequentialStringsByGroup(numbersOfSequentialString, 1, numbersOfSequentialString, 0, 1);
+    fileToSort.totalVisitDiskTimes = fileToSort.visitDiskTimesOfOutput + fileToSort.visitDiskTimesOfStringGenerator;
+    fileToSort.targetPath += "_1_1";
     outputResult();
 }
 

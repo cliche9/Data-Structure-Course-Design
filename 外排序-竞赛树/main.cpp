@@ -27,10 +27,8 @@ int main() {
         cout << "输入方式无效, 请重新输入, 归并方式 = ";
         cin >> judge;
     }
-    if (judge == 1) {
-        sorter.sortAndOutput();
-        sorter.outputResult();
-    }
+    if (judge == 1)
+        sorter.allWaySortAndOutput();
     else
         sorter.kWaySortAndOutput();
     cout << "\n# 外排序结束, 总的访存次数为: " << sorter.fileDistVisitTimes() << endl;
