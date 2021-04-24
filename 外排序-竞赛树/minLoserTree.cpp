@@ -19,7 +19,7 @@ void minLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     int i, s;
     // 找最底层最左端的内部节点，s
     for (s = 1; 2 * s <= n - 1; s += s);
-    // lowExt: 最底层内部节点个数
+    // lowExt: 最底层外部节点个数
     lowExt = 2 * (n - s);
     // offset: 设置的偏移量
     offset = 2 * s - 1;
@@ -30,7 +30,7 @@ void minLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     
     // 处理特殊情况，n为奇数，让内外节点比赛
     if (n % 2 == 1) {
-        play(n / 2, tree[n - 1], lowExt + 1);
+        play(n / 2, winners[n - 1], lowExt + 1);
         i = lowExt + 3;
     }
     else
@@ -98,6 +98,9 @@ void minLoserTree<T>::output() const {
     cout << "complete loser tree pointers are " << endl;
     for (int i = 1; i < numberOfPlayers; i++)
         cout << tree[i] << ' ';
+    cout << "\nthe players are " << endl;
+    for (int i = 1; i <= numberOfPlayers; i++)
+        cout << players[i] << ' ';
     cout << endl;
     cout << "the final winner is " << endl;
     cout << tree[0] << endl;

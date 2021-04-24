@@ -190,60 +190,33 @@ void externalSorter<T>::sortSequentialStringsByGroup(int mergeWays, int start, i
     // 计算每个顺串拥有的缓存区大小，此处顺串数目+1，目的是为了给输出区域分出一定空间
     int lines = bufferSize / (mergeWays + 1);
     // 设置缓存区
-    T *buffer_out = new T[lines];
-    T *buffer_use = new T[mergeWays + 1];
-    T **buffer_store;
-    for (int i = 0; i < lines - 1; i++)
+    T **buffer = new T*[lines];
+    for (int i = 0; i < lines; i++)
         // 设置+1，此时buffer[i][0]表示输出区域，填满即输出
-        buffer_store[i] = new T[mergeWays + 1];
+        buffer[i] = new T[mergeWays + 1];
 
     int index = 1;
     // 设置读取文件流
     for (int i = start; i <= end; i++) {
         infile[index].open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(i) + ".out");
         for (int j = 0; j < lines; j++) {
-
             // 将文件读入缓存区，读满/完为止
-            if (!(infile[index] >> buffer_store[j][index])) {
-                buffer_store[j][index] = INT_MAX;
+            if (!(infile[index] >> buffer[j][index])) {
+                buffer[j][index] = INT_MAX;
                 break;
             }
         }
         ++fileToSort.visitDiskTimesOfOutput;
         index++;
     }
-    cout << "初始状态: " << endl;
-    for (int i = 0; i <= mergeWays; i++) {
-        cout << '#' << i << ": ";
-        for (int j = 0; j < lines; j++)
-            cout << buffer[j][i] << ' ';
-        cout << endl;
-    }
-    cout << endl;
     // 生成辅助败者树
     minLoserTree<T> supportLoserTree(buffer[0], mergeWays);
-    // debug:
-    cout << "初始状态: " << endl;
-    for (int i = 0; i <= mergeWays; i++) {
-        cout << '#' << i << ": ";
-        for (int j = 0; j < lines; j++)
-            cout << buffer[j][i] << ' ';
-        cout << endl;
-    }
     // 败者树循环生成最终结果
     int winner = 0;
     int indexOf[mergeWays + 1];
     memset(indexOf, 0, sizeof(indexOf));
 
     while (buffer[indexOf[supportLoserTree.winner()]][supportLoserTree.winner()] != INT_MAX) {
-        // debug:
-        for (int i = 0; i <= mergeWays; i++) {
-            cout << '#' << i << ": ";
-            for (int j = 0; j < lines; j++)
-                cout << buffer[j][i] << ' ';
-            cout << endl;
-        }
-        cout << endl;
         // 循环，直到最终赢者为INT_MAX
         winner = supportLoserTree.winner();
         // 将输者树赢者在缓存区存放位置的值(winnerValue)放入输出缓存区
