@@ -20,9 +20,11 @@ struct sequentialStringElement {
 
 // 文件读取记录
 struct fileLog {
-    fileLog(string sPath, string tPath): sourcePath(sPath), targetPath(tPath), visitDiskTimesOfStringGenerator(0), visitDiskTimesOfOutput(0), totalVisitDiskTimes(0) {}
+    fileLog(string sPath, string tPath, string sType, string tType): sourcePath(sPath), targetPath(tPath), sourceType(sType), targetType(tType), visitDiskTimesOfStringGenerator(0), visitDiskTimesOfOutput(0), totalVisitDiskTimes(0) {}
     string sourcePath;
     string targetPath;
+    string sourceType;
+    string targetType;
     int visitDiskTimesOfStringGenerator;
     int visitDiskTimesOfOutput;
     int totalVisitDiskTimes;
@@ -54,7 +56,7 @@ externalSorter<T>::externalSorter(int buffer_size, fileLog file): bufferSize(buf
 template <class T>
 void externalSorter<T>::sequentialStringGenerator() {
     // 顺串生成器，利用最小输者树进行构造
-    ifstream infile(fileToSort.sourcePath + ".in");
+    ifstream infile(fileToSort.sourcePath + fileToSort.sourceType);
     if (!infile.is_open())
         throw failToOpenFile("无法打开对应路径文件, 构建顺串失败!\n");
     
@@ -88,7 +90,7 @@ void externalSorter<T>::sequentialStringGenerator() {
         int sequentialTag = buffer_s[winner].key;
         numbersOfSequentialString = sequentialTag;
         // 打开对应顺串的文件
-        outfile.open(fileToSort.targetPath + "_0_" + to_string(sequentialTag) + ".out", ios::app);
+        outfile.open(fileToSort.targetPath + "_0_" + to_string(sequentialTag) + fileToSort.targetType, ios::app);
         // 输出到对应文件
         outfile << buffer_s[winner].value << ' ';
         ++fileToSort.visitDiskTimesOfStringGenerator;
@@ -110,7 +112,7 @@ void externalSorter<T>::sequentialStringGenerator() {
         T t_value;
         for (int i = 1; i <= numbersOfSequentialString; i++) {
             cout << "顺串" << i << ": ";
-            infile.open(fileToSort.targetPath + "_0_" + to_string(i) + ".out");
+            infile.open(fileToSort.targetPath + "_0_" + to_string(i) + fileToSort.targetType);
             while (infile >> t_value)
                 cout << t_value << ' ';
             cout << endl;
@@ -118,7 +120,7 @@ void externalSorter<T>::sequentialStringGenerator() {
         }
         cout << "\n# 以上是生成的顺串.\n";
     }
-    cout << "顺串构建的访存次数为: " << fileToSort.visitDiskTimesOfStringGenerator << endl;
+    cout << "共生成" + to_string(numbersOfSequentialString) + "个顺串, 顺串构建的访存次数为: " << fileToSort.visitDiskTimesOfStringGenerator << endl;
 }
 
 // 缓存区需要留出输出部分，否则一次一次输出内外存读取实在是太耗时间了
@@ -135,8 +137,8 @@ void externalSorter<T>::sortSequentialStringsByGroup(int mergeWays, int start, i
     if (numbersOfSequentialString == 1) {
         ifstream infile;
         T *buffer = new T[bufferSize + 1];
-        infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + "_1.out");
-        outfile.open(fileToSort.targetPath + ".out");
+        infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + "_1" + fileToSort.targetType);
+        outfile.open(fileToSort.targetPath + "_1_1" + fileToSort.targetType);
         int i = 1;
         while (buffer[i] != INT_MAX) {
             // 填满一次缓存区/读取一次文件记一次文件读取
@@ -162,8 +164,8 @@ void externalSorter<T>::sortSequentialStringsByGroup(int mergeWays, int start, i
     if (mergeWays == 1) {
         ifstream infile;
         T *buffer = new T[bufferSize + 1];
-        infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(start) + ".out");
-        outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroupNumber) + ".out", ios::app);
+        infile.open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(start) + fileToSort.targetType);
+        outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroupNumber) + fileToSort.targetType, ios::app);
         int i = 1;
         while (buffer[i] != INT_MAX) {
             // 填满一次缓存区/读取一次文件记一次文件读取
@@ -198,7 +200,7 @@ void externalSorter<T>::sortSequentialStringsByGroup(int mergeWays, int start, i
     int index = 1;
     // 设置读取文件流
     for (int i = start; i <= end; i++) {
-        infile[index].open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(i) + ".out");
+        infile[index].open(fileToSort.targetPath + '_' + to_string(mergeRound) + '_' + to_string(i) + fileToSort.targetType);
         for (int j = 0; j < lines; j++) {
             // 将文件读入缓存区，读满/完为止
             if (!(infile[index] >> buffer[j][index])) {
@@ -223,7 +225,7 @@ void externalSorter<T>::sortSequentialStringsByGroup(int mergeWays, int start, i
         buffer[indexOf[0]++][0] = buffer[indexOf[winner]][winner];
         // buffer[i][0]是输出缓存区，indexOf[0]记录这一列的当前位置，当indexOf[0] == lines时，说明输出缓存区满了，这时候输出到文件
         if (indexOf[0] == lines) {
-            outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroupNumber) + ".out", ios::app);
+            outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroupNumber) + fileToSort.targetType, ios::app);
             // 输出到文件
             for (int i = 0; i < lines; i++)
                 outfile << buffer[i][0] << ' ';
@@ -255,7 +257,7 @@ void externalSorter<T>::sortSequentialStringsByGroup(int mergeWays, int start, i
     // 完成上述过程，需要将输出缓存区内容全部输出到文件里
     if (indexOf[0]) {
         // 如果输出缓存区有内容
-        outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroupNumber) + ".out", ios::app);
+        outfile.open(fileToSort.targetPath + '_' + to_string(mergeRound + 1) + '_' + to_string(sequentialGroupNumber) + fileToSort.targetType, ios::app);
         // 输出到文件，此时结尾是indexOf[0]
         for (int i = 0; i < indexOf[0]; i++)
             outfile << buffer[i][0] << ' ';
@@ -326,7 +328,7 @@ void externalSorter<T>::outputResult() const {
     if (judge == 'y' || judge == 'Y') {
         T t_value;
         int count = 0;
-        infile.open(fileToSort.targetPath + ".out");
+        infile.open(fileToSort.targetPath + fileToSort.targetType);
         while (infile >> t_value) {
             if (count == 10) {
                 cout << endl;

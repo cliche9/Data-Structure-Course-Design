@@ -10,12 +10,22 @@
 */
 
 int main() {
-    string rootDirectory = "/Users/abc_mac/Documents/Code/数据结构课设/外排序-竞赛树/data/";
+    cout << "请输入待排序文件所在目录的绝对路径: \n";
+    string rootDirectoryOfInput;
+    cin >> rootDirectoryOfInput;
+    cout << "请输入输出文件所在目录的绝对路径: \n";
+    string rootDirectoryOfOutput;
+    cin >> rootDirectoryOfOutput;
     string inFilename;
     cout << "请输入你要进行排序的文件名称: ";
     cin >> inFilename;
+    cout << "请输入待排序文件的文件类型: (如.txt, .in)\n";
+    string sType, tType;
+    cin >> sType;
+    cout << "请输入输出文件的文件类型: (如.txt, .out)\n";
+    cin >> tType;
 
-    fileLog fileToSort(rootDirectory + "input/" + inFilename, rootDirectory + "output/" + inFilename);
+    fileLog fileToSort(rootDirectoryOfInput + inFilename, rootDirectoryOfOutput + inFilename, sType, tType);
     int bufferSize = 0;
     cout << "请输入缓冲区可存放元素个数: ";
     cin >> bufferSize;
