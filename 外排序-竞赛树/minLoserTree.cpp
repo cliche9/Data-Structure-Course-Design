@@ -24,11 +24,11 @@ void minLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     // offset: 设置的偏移量
     offset = 2 * s - 1;
 
-    // 比赛，直到最外部一行
+    // 最底层外部节点比赛，直到最外部一行
     for (int i = 2; i <= lowExt; i += 2)
         play((offset + i) / 2, i - 1, i);
     
-    // 处理特殊情况，n为奇数，让内外节点比赛
+    // 处理特殊情况，n为奇数，有额外的外部节点，让内外节点比赛
     if (n % 2 == 1) {
         play(n / 2, winners[n - 1], lowExt + 1);
         i = lowExt + 3;
@@ -36,7 +36,7 @@ void minLoserTree<T>::initialize(T *thePlayers, int theNumberOfPlayers) {
     else
         i = lowExt + 2;
     
-    // i是最左端余下的外部节点
+    // i是最底层往上一层的外部节点序号 - 最底层前面已经比完
     for (; i <= n; i += 2)
         play((i - lowExt + n - 1) / 2, i - 1, i);
     // 设置全局赢者
@@ -78,11 +78,14 @@ void minLoserTree<T>::rePlay(int thePlayer, T newElement) {
     else
         matchNode = (thePlayer - lowExt + n - 1) / 2;
 
-    // 改变的是赢者
+    // 从thePlayer的第一场比赛开始, 重赛到根节点。
     for (; matchNode >= 1; matchNode /= 2) {
         if (players[tree[matchNode]] <= players[thePlayer]) {
+            // 当前节点原来的败者成为了现在的胜者
             int winner = tree[matchNode];
+            // 将节点值改为thePlayer
             tree[matchNode] = thePlayer;
+            // 将thePlayer改为原节点值, 继续向上重赛
             thePlayer = winner;
         }
     }
