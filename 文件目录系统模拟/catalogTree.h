@@ -1,6 +1,7 @@
 #ifndef _CATALOG_TREE_H_
 #define _CATALOG_TREE_H_
 #include "../exception.h"
+#include <vector>
 
 struct logNode {
     // 当前目录名或文件名
@@ -57,6 +58,9 @@ private:
     logNode *root;
     // 当前所在目录(最底层目录)
     logNode *deepestDir;
+    // split, 将地址拆分成string
+    vector<string> split(const string &thePath, char tag = '/') const;
+    void display() const;
 };
 
 #endif
