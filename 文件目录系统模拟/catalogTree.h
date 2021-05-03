@@ -17,13 +17,13 @@ struct logNode {
     // child的数目
     int childSize;
     // 构造函数等 - fileTag: 0-dir, 1-file
-    logNode(const string &theName, logNode *theParent, bool fileTag)
-        : fileName(theName), parent(theParent), child(nullptr), slibing(nullptr), dirOrfile(fileTag), childSize(0) {}
+    logNode(const string &theName, logNode *theParent, bool fileTag, int size = 0)
+        : fileName(theName), parent(theParent), child(nullptr), slibing(nullptr), dirOrfile(fileTag), childSize(size) {}
     ~logNode() {
         // 递归析构 -- 删一个目录只需要删一个节点即可
         // 调用起来方便
         logNode *curNode = child, *preNode = child;
-        while (child != nullptr) {
+        while (curNode != nullptr) {
             preNode = curNode;
             curNode = curNode->slibing;
             delete preNode;
@@ -57,7 +57,7 @@ private:
     // 根目录
     logNode *root;
     // 当前所在目录(最底层目录)
-    logNode *deepestDir;
+    logNode *currentDir;
     // split, 将地址拆分成string
     vector<string> split(const string &thePath, char tag = '/') const;
     void display() const;
