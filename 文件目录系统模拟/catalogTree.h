@@ -53,6 +53,8 @@ public:
     void load(const string &sourcePath);
     // 退出程序
     void quit() const;
+    // 运行程序
+    void execute();
 private:
     // 根目录
     logNode *root;

@@ -1,4 +1,5 @@
 #include "catalogTree.h"
+#include "catalogTree.cpp"
 
 int main() {
     string rootName;
@@ -6,7 +7,7 @@ int main() {
     cin >> rootName;
     catalogTree fileTree(rootName);
 
-    while (true) {
-        
-    }
+    fileTree.execute();
+
+    return 0;
 }

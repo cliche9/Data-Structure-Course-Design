@@ -1,5 +1,6 @@
 #include "catalogTree.h"
 #include <iomanip>
+#include <sstream>
 #include <fstream>
 #include <stack>
 
@@ -24,9 +25,10 @@ void catalogTree::dir() const {
         }
         curNode = curNode->slibing;
     }
+    if (count < 3)
+        cout << endl;
     // 每次操作完成都需要重新输出当前目录的绝对路径?
     // 该输出相对路径还是绝对路径呢?
-    display();
 }
 
 void catalogTree::cd() const {
@@ -42,9 +44,18 @@ void catalogTree::cd() const {
         cout << path.top() << '/';
         path.pop();
     }
+    cout << endl;
 }
 
 void catalogTree::cdStr(const string &targetPath) {
+    // 返回上一层目录
+    if (targetPath == "..") {
+        if (currentDir != root)
+            // 只有当前不是根目录才返回
+            currentDir = currentDir->parent;
+        return;
+    }
+    // 进入目录
     bool legalPath = true;
     // 拆分地址成string
     vector<string> path = split(targetPath);
@@ -83,7 +94,6 @@ void catalogTree::cdStr(const string &targetPath) {
     // 地址合法, 更新当前目录
     currentDir = curNode;
     // 输出当前目录
-    display();
 }
 
 void catalogTree::mkdir(const string &dirName) {
@@ -191,13 +201,62 @@ void catalogTree::quit() const {
     exit(1);
 }
 
+void catalogTree::execute() {
+    display();
+    string oneLineOpt;
+    while (true) {
+        fflush(stdin);
+        getline(cin, oneLineOpt);
+        stringstream ss(oneLineOpt);
+        vector<string> opts;
+        while (ss >> oneLineOpt)
+            opts.emplace_back(oneLineOpt);
+        switch (opts.size()) {
+            case 1: {
+                if (oneLineOpt == "dir")
+                    dir();
+                else if (oneLineOpt == "cd")
+                    cd();
+                else if (oneLineOpt == "quit")
+                    quit();
+                else 
+                    cout << "Invalid operation!\n";
+                break;
+            }
+            case 2: {
+                if (opts[0] == "cd")
+                    cdStr(opts[1]);
+                else if (opts[0] == "mkdir")
+                    mkdir(opts[1]);
+                else if (opts[0] == "mkfile")
+                    mkdir(opts[1]);
+                else if (opts[0] == "delete")
+                    erase(opts[1]);
+                else if (opts[0] == "save")
+                    save(opts[1]);
+                else if (opts[0] == "load")
+                    load(opts[1]);
+                else
+                    cout << "Invalid operation!\n";
+                break;
+            }
+            default:
+                cout << "Invalid operation!\n";
+        }
+        display();
+    }
+}
+
 vector<string> catalogTree::split(const string &thePath, char tag) const {
+    string path(thePath);
     vector<string> res;
     string temp;
+    if (*path.end() != '/')
+        path += "/";
 
-    for (int i = 0; i < thePath.length(); i++) {
+    for (int i = 0; i < path.length(); i++) {
         // 每遇到一个'/', 就拆分一部分地址
-        if (thePath[i] == tag) {
+        if (path[i] == tag) {
             if (temp.empty())
                 // 说明是绝对路径, push一个根目录
                 res.push_back("/");
