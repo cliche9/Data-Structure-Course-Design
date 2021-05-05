@@ -34,9 +34,11 @@ struct logNode {
 
 class catalogTree {
 public:
-    catalogTree(const string &rootName);
+    catalogTree();
     ~catalogTree();
     // 列出当前目录下的文件和目录
+    void ls() const;
+    // for data test
     void dir() const;
     // 列出当前目录的绝对路径
     void cd() const;
@@ -69,6 +71,7 @@ private:
     void subSave(logNode *root);
     void subLoad(logNode *parent, int nodeCount);
     void display() const;
+    static bool cmp(const string &s1, const string &s2);
 };
 
 #endif

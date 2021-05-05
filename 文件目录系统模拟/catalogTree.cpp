@@ -4,8 +4,8 @@
 #include <fstream>
 #include <stack>
 
-catalogTree::catalogTree(const string &rootName) {
-    root = new logNode(rootName, nullptr, 0);
+catalogTree::catalogTree() {
+    root = new logNode("/", nullptr, 0);
     currentDir = root;
 }
 
@@ -13,7 +13,7 @@ catalogTree::~catalogTree() {
     delete root;
 }
 
-void catalogTree::dir() const {
+void catalogTree::ls() const {
     logNode *curNode = currentDir->child;
     int count = 0;
     while (curNode != nullptr && ++count) {
@@ -31,17 +31,51 @@ void catalogTree::dir() const {
     // 该输出相对路径还是绝对路径呢?
 }
 
+void catalogTree::dir() const {
+    vector<string> res;
+    string temp;
+    logNode *curNode = currentDir->child;
+    // res使用sort排序一下, 实现字典序有序
+    while (curNode != nullptr) {
+        temp = curNode->fileName;
+        if (curNode->dirOrfile)
+            temp += "*";
+        res.push_back(temp);
+        curNode = curNode->slibing;
+    }
+    sort(res.begin(), res.end(), cmp);
+    // 输出结果
+    /*
+    测试数据 - 删除count部分
+    */
+    int count = 0;
+    for (vector<string>::iterator iter = res.begin(); iter != res.end() && ++count; ++iter) {
+        cout << std::left << setw(20) << *iter;
+        if (count == 3) {
+            cout << endl;
+            count = 0;
+        }
+    }
+    if (count > 0 && count < 3)
+        cout << endl;
+}
+
 void catalogTree::cd() const {
     stack<string> path;
     logNode *curNode = currentDir;
     // 自底向上遍历到根, 存储路径名称
-    while (curNode != nullptr) {
+    while (curNode->parent != nullptr) {
         path.push(curNode->fileName);
         curNode = curNode->parent;
     }
+    // 只有根目录
+    if (path.empty()) {
+        cout << '/' << endl;
+        return;
+    }
     // 自顶向下输出路径名称, 直到栈空
     while (!path.empty()) {
-        cout << path.top() << '/';
+        cout << '/' << path.top();
         path.pop();
     }
     cout << endl;
@@ -60,18 +94,11 @@ void catalogTree::cdStr(const string &targetPath) {
     // 拆分地址成string
     vector<string> path = split(targetPath);
     // 绝对路径
-    vector<string>::iterator iter = path.begin(); 
+    vector<string>::iterator iter = path.begin();
     logNode *curNode = nullptr;
     if (*iter == "/") {
         ++iter;
         // 绝对路径
-        // 根节点是否合法
-        if (root->fileName != *iter) {
-            cout << "cd: no such file or directory: " << targetPath << endl;
-            return;
-        }
-        // 根合法
-        ++iter;
         curNode = root;
     }
     else 
@@ -216,7 +243,7 @@ void catalogTree::execute() {
                 else if (opts[0] == "mkdir")
                     mkdir(opts[1]);
                 else if (opts[0] == "mkfile")
-                    mkdir(opts[1]);
+                    mkfile(opts[1]);
                 else if (opts[0] == "delete")
                     erase(opts[1]);
                 else if (opts[0] == "save")
@@ -302,4 +329,14 @@ void catalogTree::subLoad(logNode *parent, int nodeCount) {
 
 void catalogTree::display() const {
     cout << "abc_mac@macBook-Pro " << currentDir->fileName << " % ";
+}
+
+bool catalogTree::cmp(const string &s1, const string &s2) {
+    // 同类比较
+    int l1 = s1.length(), l2 = s2.length();
+    if ((s1[l1 - 1] == '*' && s2[l2 - 1] == '*') || (s1[l1 - 1] != '*' && s2[l2 - 1] != '*'))
+        return s1 < s2;
+    else
+        // 具体文件优先级高
+        return s1[l1 - 1] == '*';
 }
