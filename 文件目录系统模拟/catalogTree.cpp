@@ -18,14 +18,14 @@ void catalogTree::dir() const {
     int count = 0;
     while (curNode != nullptr && ++count) {
         // 规定输出格式
-        cout << setw(20) << curNode->fileName;
+        cout << std::left << setw(20) << curNode->fileName;
         if (count == 3) {
             cout << endl;
             count = 0;
         }
         curNode = curNode->slibing;
     }
-    if (count < 3)
+    if (count > 0 && count < 3)
         cout << endl;
     // 每次操作完成都需要重新输出当前目录的绝对路径?
     // 该输出相对路径还是绝对路径呢?
@@ -65,6 +65,13 @@ void catalogTree::cdStr(const string &targetPath) {
     if (*iter == "/") {
         ++iter;
         // 绝对路径
+        // 根节点是否合法
+        if (root->fileName != *iter) {
+            cout << "cd: no such file or directory: " << targetPath << endl;
+            return;
+        }
+        // 根合法
+        ++iter;
         curNode = root;
     }
     else 
@@ -74,10 +81,12 @@ void catalogTree::cdStr(const string &targetPath) {
     while (iter != path.end()) {
         // 进入下一层目录进行判断
         curNode = curNode->child;
-        while (curNode != nullptr)
-            if (curNode->fileName == *iter)
+        while (curNode != nullptr) {
+            if (curNode->fileName == *iter && !curNode->dirOrfile)
                 break;
-        // 无对应目录或文件
+            curNode = curNode->slibing;
+        }
+        // 无对应目录
         if (curNode == nullptr) {
             legalPath = false;
             break;
@@ -137,31 +146,31 @@ void catalogTree::mkfile(const string &fileName) {
 }
 
 void catalogTree::erase(const string &fileName) {
+    logNode *preNode = currentDir;
     logNode *curNode = currentDir->child;
     // 寻找fileName名称的文件/目录
     while (curNode != nullptr) {
         if (curNode->fileName == fileName)
             break;
+        preNode = curNode;
         curNode = curNode->slibing;
     }
     // 不存在, 直接返回
     if (curNode == nullptr)
         return;
     // 存在, 删除
+    if (preNode->child == curNode)
+        preNode->child = curNode->slibing;
+    else
+        preNode->slibing = curNode->slibing;
     delete curNode;
     currentDir->childSize--;
 }
 
 void catalogTree::save(const string &targetPath) {
-    // 设置输出路径
-    ofstream outfile(targetPath);
-    // 保存一个根节点
-    outfile << root->fileName << ' ' << root->dirOrfile << ' ' << root->childSize << endl;
-    // 循环 - 一层一层保存所有节点
-    for (logNode *curNode = root; curNode != nullptr; curNode = curNode->child)
-        for (logNode *temp = curNode->child; temp != nullptr; temp = temp->slibing)
-            outfile << temp->fileName << ' ' << temp->dirOrfile << ' ' << temp->childSize << endl;
-    // 后续复原时可以根据部分复原的树决定读取的节点个数
+    outfile.open(targetPath);
+    subSave(root);
+    outfile.close();
 }
 
 void catalogTree::load(const string &sourcePath) {
@@ -169,32 +178,10 @@ void catalogTree::load(const string &sourcePath) {
     delete root;
     root = currentDir = nullptr;
     // 读取文件建立新树
-    ifstream infile(sourcePath);
-    string fileName;
-    bool dirOrfile;
-    int childSize;
-    // 读取根节点
-    infile >> fileName >> dirOrfile >> childSize;
-    root = new logNode(fileName, nullptr, dirOrfile, childSize);
-    logNode *curNode = root;
-    while (!infile.eof()) {
-        // 循环, 直到文件读取完
-        if (curNode->childSize == 0)
-            // 对于没有子文件的节点, 直接跳过
-            continue;
-        infile >> fileName >> dirOrfile >> childSize;
-        // 处理有子文件的节点
-        curNode->child = new logNode(fileName, curNode, dirOrfile, childSize);
-        logNode *temp = curNode->child;
-        // 循环, 看是否有兄弟节点
-        for (int i = 1; i < curNode->childSize; i++) {
-            infile >> fileName >> dirOrfile >> childSize;
-            temp->slibing = new logNode(fileName, curNode, dirOrfile, childSize);
-            temp = temp->slibing;
-        }
-        // 进入下一层
-        curNode = curNode->child;
-    }
+    infile.open(sourcePath);
+    subLoad(root, -1);
+    infile.close();
+    currentDir = root;
 }
 
 void catalogTree::quit() const {
@@ -210,10 +197,10 @@ void catalogTree::execute() {
         stringstream ss(oneLineOpt);
         vector<string> opts;
         while (ss >> oneLineOpt)
-            opts.emplace_back(oneLineOpt);
+            opts.push_back(oneLineOpt);
         switch (opts.size()) {
             case 1: {
-                if (oneLineOpt == "dir")
+                if (oneLineOpt == "dir" || oneLineOpt == "ls")
                     dir();
                 else if (oneLineOpt == "cd")
                     cd();
@@ -248,28 +235,71 @@ void catalogTree::execute() {
 }
 
 vector<string> catalogTree::split(const string &thePath, char tag) const {
-    string path(thePath);
     vector<string> res;
     string temp;
-    if (*path.end() != '/')
-        path += "/";
+    if (thePath[0] == '/')
+        res.push_back("/");
 
-    for (int i = 0; i < path.length(); i++) {
+    for (int i = 0; i < thePath.length(); i++) {
         // 每遇到一个'/', 就拆分一部分地址
-        if (path[i] == tag) {
-            if (temp.empty())
-                // 说明是绝对路径, push一个根目录
-                res.push_back("/");
-            else {
+        if (thePath[i] == tag) {
+            if (!temp.empty()) {
                 res.push_back(temp);
                 temp.clear();
             }
         }
+        else
+            temp += thePath[i];
     }
+    if (!temp.empty())
+        res.push_back(temp);
 
     return res;
 }
 
+void catalogTree::subSave(logNode *root) {
+    // 递归保存
+    if (root == nullptr)
+        return;
+    // 保存一个根节点
+    outfile << root->fileName << ' ' << root->dirOrfile << ' ' << root->childSize << endl;
+    logNode *curNode = root->child;
+    while (curNode != nullptr) {
+        subSave(curNode);
+        curNode = curNode->slibing;
+    }
+}
+
+void catalogTree::subLoad(logNode *parent, int nodeCount) {
+    // 待接收参数
+    string fileName;
+    bool dirOrfile;
+    int childSize;
+    // 根节点
+    if (nodeCount == -1) {
+        infile >> fileName >> dirOrfile >> childSize;
+        root = new logNode(fileName, nullptr, dirOrfile, childSize);
+        subLoad(root, childSize);
+    }
+    else {
+        // 其他节点
+        if (nodeCount) {
+            // 对child特别处理
+            infile >> fileName >> dirOrfile >> childSize;
+            parent->child = new logNode(fileName, parent, dirOrfile, childSize);
+            subLoad(parent->child, childSize);
+        }
+        logNode *curNode = parent->child;
+        // 处理slibling
+        for (int i = 1; i < nodeCount; i++) {
+            infile >> fileName >> dirOrfile >> childSize;
+            curNode->slibing = new logNode(fileName, parent, dirOrfile, childSize);
+            subLoad(curNode->slibing, childSize);
+            curNode = curNode->slibing;
+        }
+    }
+}
+
 void catalogTree::display() const {
-    cout << currentDir->fileName << " % ";
+    cout << "abc_mac@macBook-Pro " << currentDir->fileName << " % ";
 }

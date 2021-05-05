@@ -1,6 +1,7 @@
 #ifndef _CATALOG_TREE_H_
 #define _CATALOG_TREE_H_
 #include "../exception.h"
+#include <fstream>
 #include <vector>
 
 struct logNode {
@@ -60,8 +61,13 @@ private:
     logNode *root;
     // 当前所在目录(最底层目录)
     logNode *currentDir;
+    // infile/outfile
+    ifstream infile;
+    ofstream outfile;
     // split, 将地址拆分成string
     vector<string> split(const string &thePath, char tag = '/') const;
+    void subSave(logNode *root);
+    void subLoad(logNode *parent, int nodeCount);
     void display() const;
 };
 
