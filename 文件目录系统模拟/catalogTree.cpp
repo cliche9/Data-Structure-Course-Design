@@ -103,13 +103,6 @@ void catalogTree::cd() const {
 }
 
 void catalogTree::cdStr(const string &targetPath) {
-    // 返回上一层目录
-    if (targetPath == "..") {
-        if (currentDir != root)
-            // 只有当前不是根目录才返回
-            currentDir = currentDir->parent;
-        return;
-    }
     // 进入目录
     bool legalPath = true;
     // 拆分地址成string
@@ -125,6 +118,14 @@ void catalogTree::cdStr(const string &targetPath) {
     else 
         // 相对路径
         curNode = currentDir;
+    // 返回上一层目录
+    if (*iter == "..") {
+        if (currentDir != root)
+            // 只有当前不是根目录才返回
+            currentDir = currentDir->parent;
+        curNode = currentDir;
+        ++iter;
+    }
     // 寻找路径对应目录
     while (iter != path.end()) {
         // 进入下一层目录进行判断
