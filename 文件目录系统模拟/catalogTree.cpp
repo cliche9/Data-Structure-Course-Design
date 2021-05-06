@@ -14,21 +14,50 @@ catalogTree::~catalogTree() {
 }
 
 void catalogTree::ls() const {
+    // 获取有序的序列
+    vector<string> res;
+    string temp;
     logNode *curNode = currentDir->child;
-    int count = 0;
-    while (curNode != nullptr && ++count) {
-        // 规定输出格式
-        cout << std::left << setw(30) << curNode->fileName;
-        if (count == 3) {
-            cout << endl;
-            count = 0;
-        }
+    // res使用sort排序一下, 实现字典序有序
+    while (curNode != nullptr) {
+        temp = curNode->fileName;
+        if (curNode->dirOrfile)
+            temp += "*";
+        res.push_back(temp);
         curNode = curNode->slibing;
     }
-    if (count > 0 && count < 3)
+    if (res.empty())
+        // 空序列直接返回
+        return;
+    
+    sort(res.begin(), res.end(), cmp);
+    // 设置输出格式, 4列均分
+    // 使用桶存放各个位置
+    int preNumber = (res.size() % 4) ? res.size() / 4 + 1 : res.size() / 4;
+    vector<vector<string> > bins;
+    vector<string> bin;
+    vector<string>::iterator iter = res.begin();
+    // 遍历整个有序序列, 输出到桶里
+    while (iter != res.end()) {
+        for (int i = 0; i < preNumber; i++) {
+            if (iter == res.end())
+                break;
+            bin.push_back(*iter);
+            ++iter;
+        }
+        if (!bin.empty()) {
+            bins.push_back(bin);
+            bin.clear();
+        }
+    }
+    // 遍历所有桶, 输出结果
+    for (int row = 0; row < bins[0].size(); row++) {
+        for (int col = 0; col < bins.size(); col++) {
+            if (row < bins[col].size())
+                cout << std::left << setw(30) << bins[col][row];
+        }
         cout << endl;
-    // 每次操作完成都需要重新输出当前目录的绝对路径?
-    // 该输出相对路径还是绝对路径呢?
+    }
 }
 
 void catalogTree::dir() const {
@@ -228,7 +257,8 @@ void catalogTree::execute() {
         switch (opts.size()) {
             case 1: {
                 if (oneLineOpt == "dir" || oneLineOpt == "ls")
-                    dir();
+                    // dir();
+                    ls();
                 else if (oneLineOpt == "cd")
                     cd();
                 else if (oneLineOpt == "quit")
