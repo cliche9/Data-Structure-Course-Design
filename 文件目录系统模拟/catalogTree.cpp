@@ -18,7 +18,7 @@ void catalogTree::ls() const {
     int count = 0;
     while (curNode != nullptr && ++count) {
         // 规定输出格式
-        cout << std::left << setw(20) << curNode->fileName;
+        cout << std::left << setw(30) << curNode->fileName;
         if (count == 3) {
             cout << endl;
             count = 0;
