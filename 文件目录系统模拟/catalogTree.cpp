@@ -77,16 +77,8 @@ void catalogTree::dir() const {
     /*
     测试数据 - 删除count部分
     */
-    int count = 0;
-    for (vector<string>::iterator iter = res.begin(); iter != res.end() && ++count; ++iter) {
-        cout << std::left << setw(20) << *iter;
-        if (count == 3) {
-            cout << endl;
-            count = 0;
-        }
-    }
-    if (count > 0 && count < 3)
-        cout << endl;
+    for (vector<string>::iterator iter = res.begin(); iter != res.end(); ++iter)
+        cout << *iter << endl;
 }
 
 void catalogTree::cd() const {
@@ -286,6 +278,7 @@ void catalogTree::quit() const {
 }
 
 void catalogTree::execute() {
+    // for test
     display();
     string oneLineOpt;
     while (true) {
@@ -332,6 +325,7 @@ void catalogTree::execute() {
             default:
                 cout << "Invalid operation!\n";
         }
+        // for test
         display();
     }
 }
