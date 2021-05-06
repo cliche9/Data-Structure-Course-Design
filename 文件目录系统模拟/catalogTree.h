@@ -29,6 +29,8 @@ struct logNode {
             curNode = curNode->slibing;
             delete preNode;
         }
+        if (parent)
+            parent->childSize--;
     }
 };
 
@@ -50,6 +52,8 @@ public:
     void mkfile(const string &fileName);
     // 删除当前目录下名为fileName的目录或文件
     void erase(const string &fileName);
+    // 删除空目录(-p : 连带parent一块)
+    // void rmdir(const string &dirName, bool tag = false);
     // 将当前的目录树保存到targetPath对应的文件里
     void save(const string &targetPath);
     // 从sourcePath文件读入并恢复目录树信息

@@ -2,8 +2,8 @@
 #include "catalogTree.cpp"
 
 int main() {
-    string rootName;
     /*
+    string rootName;
     cout << "请输入您要设置的根目录名称: ";
     cin >> rootName;
     */

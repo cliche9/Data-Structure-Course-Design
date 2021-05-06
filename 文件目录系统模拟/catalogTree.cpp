@@ -201,6 +201,48 @@ void catalogTree::mkfile(const string &fileName) {
     currentDir->childSize++;
 }
 
+/* rmdir
+void catalogTree::rmdir(const string &dirName, bool tag) {
+    vector<string> path = split(dirName);
+    if (path.size() == 1)
+    if (!currentDir->childSize)
+        // 无子目录, 直接返回
+        return;
+    // 有子目录
+    // 需要考虑-p时, 拆分地址成string
+    if (tag) {
+        vector<string> path = split(dirName);
+
+        return;
+    }
+    // 不考虑-p
+    bool isFirstChild = true;
+    logNode *firstChild = currentDir->child;
+    logNode *preNode = currentDir->child;
+    logNode *curNode = preNode->slibing;
+    // 删除处理preNode
+    while (curNode != nullptr) {
+        if (!preNode->dirOrfile && preNode->childSize == 0) {
+            delete preNode;
+            if (isFirstChild)
+                firstChild = curNode;
+        }
+        else
+            isFirstChild = false;
+        preNode = curNode;
+        curNode = curNode->slibing;
+    }
+    // 最后处理一下最后的目录
+    if (!preNode->dirOrfile && preNode->childSize == 0) {
+        delete preNode;
+        if (isFirstChild)
+            firstChild = curNode;
+    }
+    // 设置当前目录的第一个孩子
+    currentDir->child = firstChild;
+}
+*/
+
 void catalogTree::erase(const string &fileName) {
     logNode *preNode = currentDir;
     logNode *curNode = currentDir->child;
@@ -220,7 +262,6 @@ void catalogTree::erase(const string &fileName) {
     else
         preNode->slibing = curNode->slibing;
     delete curNode;
-    currentDir->childSize--;
 }
 
 void catalogTree::save(const string &targetPath) {
@@ -276,6 +317,10 @@ void catalogTree::execute() {
                     mkfile(opts[1]);
                 else if (opts[0] == "delete")
                     erase(opts[1]);
+                /*
+                else if (opts[0] == "rmdir")
+                    rmdir(opts[1]);
+                */
                 else if (opts[0] == "save")
                     save(opts[1]);
                 else if (opts[0] == "load")
