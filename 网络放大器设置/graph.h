@@ -24,12 +24,19 @@ ostream & operator<<(ostream &out, const node &x) {
 
 class wDigraph {
 public:
+    wDigraph(int n = 0, int maxTolerance = 0);
     void placeBoosters(node *x);
     void output(ostream &out) const;
 private:
     node *sourceNode;
-    int tolerance;                  // 最大可容忍衰减量   
+    int nums;                       // 节点数目
+    int tolerance;                  // 最大可容忍衰减量
 };
+
+wDigraph::wDigraph(int n, int maxTolerance): nums(n), tolerance(maxTolerance) {
+    sourceNode = new node(1, 0);
+    
+}
 
 void wDigraph::placeBoosters(node *x) {
     // 计算x的衰减量, 若小于容忍值, 则在x的子节点放置一个放大器
