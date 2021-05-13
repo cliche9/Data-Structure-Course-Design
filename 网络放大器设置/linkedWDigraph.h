@@ -83,10 +83,7 @@ public:
         // 判断是否结束
         if (level >= numberOfVertex - 1) {
             // 到达决策树底层, 可以返回了
-            if (number_of_boosters < numberOfBoosters) {
-                // 找到更优解, 更新结果
-                numberOfBoosters = number_of_boosters;
-            }
+            numberOfBoosters = min(numberOfBoosters, number_of_boosters);
             return;
         }
         // 找到该层决策的节点
@@ -141,7 +138,24 @@ public:
     }
     // 输出结果
     void output() const {
-        cout << numberOfBoosters << endl;
+        cout << numberOfBoosters;
+    }
+    // 可视化
+    void visual() const {
+        ofstream out("1.dot");
+        out << "digraph g {\n";
+        for (int i = 1; i < numberOfVertex; ++i) {
+            out << i;
+            out << "[label=\"node" << i << "\",style=filled, fillcolor=white];\n";
+        }
+        for (auto i = 1; i <= numberOfVertex; ++i) {
+            for (auto& edge : vertexOf[i].edges) {
+                out << i << "->" << edge.to << "[label=\"cost=" << edge.weight << "\"];\n";
+            }
+        }
+        out << "}\n";
+        out.close();
+        system("dot -Tjpg 1.dot -o solve1.jpg");
     }
 };
 
