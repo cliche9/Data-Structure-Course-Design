@@ -33,6 +33,7 @@ private:
     vector<vertexNode> vertexOf;       // 节点集
     vector<int> sequence;              // 节点访问顺序
     vector<bool> boosterHere;          // 是否放石油放大器
+    vector<bool> boosterHereFinal;     // 最终结果
 public:
     DAG() {
         cin >> numberOfVertex >> numberOfEdges >> Pmax;
@@ -40,7 +41,7 @@ public:
         Pmin = 0;
         // 初始化元素
         vertexOf.resize(numberOfVertex + 1);
-        sequence.resize(numberOfVertex);
+        sequence.resize(numberOfVertex + 1);
         boosterHere.resize(numberOfVertex + 1);
         for (int i = 1; i <= numberOfVertex; ++i) {
             vertexOf[i].number = i;
@@ -70,7 +71,7 @@ public:
         while (!q.empty()) {
             int v = q.front();
             q.pop();
-            sequence[now++] = v;
+            sequence[++now] = v;
             for (vector<wEdge>::iterator e = vertexOf[v].edges.begin(); e != vertexOf[v].edges.end(); ++e)
                 if ((--inDegreeOf[e->to]) == 0)
                     q.push(e->to);
@@ -81,59 +82,68 @@ public:
         // 标识是否需要放放大器
         bool tag = false;
         // 判断是否结束
-        if (level >= numberOfVertex - 1) {
+        if (level >= numberOfVertex) {
             // 到达决策树底层, 可以返回了
-            numberOfBoosters = min(numberOfBoosters, number_of_boosters);
+            if (number_of_boosters < numberOfBoosters) {
+                numberOfBoosters = number_of_boosters;
+                boosterHereFinal = boosterHere;
+            }
             return;
         }
         // 找到该层决策的节点
         int theVertexNumber = sequence[level];
         vertexOf[theVertexNumber].pressure = 0;
         // 特殊处理源点
-        if (level == 0) {
+        if (level == 1) {
             vertexOf[theVertexNumber].pressure = Pmax;
             boosterHere[level] = false;
-            placeBooster(1, 0);
+            placeBooster(2, 0);
             return;
         }
         // 求theVertexNumber处的油压
-        for (int i = 0; i < level; ++i)
+        for (int i = 1; i < level; ++i)
             for (vector<wEdge>::iterator e = vertexOf[sequence[i]].edges.begin(); e != vertexOf[sequence[i]].edges.end(); ++e)
                 if (e->to == theVertexNumber)
                     // 需要求出到达该点的最大压力, 但是同时又要考虑是否能到达全部边, 这里需要考虑吗?
                     vertexOf[theVertexNumber].pressure = max(vertexOf[theVertexNumber].pressure, vertexOf[sequence[i]].pressure - e->weight);
 
-        if (vertexOf[theVertexNumber].pressure <= Pmin) {
+        if (vertexOf[theVertexNumber].pressure <= Pmin)
             // 从前面的点无法到达该点/到达的压力 <= 0, 必须放一个放大器
-            boosterHere[level] = true;
-            ++number_of_boosters;
-            vertexOf[theVertexNumber].pressure = Pmax;
-            if (number_of_boosters >= numberOfBoosters)
-                // 此时如果已经 >= 最优结果了, 不需要再向下了, 剪枝
-                return;
-            placeBooster(level + 1, number_of_boosters);
-        }
-        else {
-            for (vector<wEdge>::iterator e = vertexOf[theVertexNumber].edges.begin(); e != vertexOf[theVertexNumber].edges.end(); ++e)
+            tag = true;
+        if (!tag) {
+            for (vector<wEdge>::iterator e = vertexOf[theVertexNumber].edges.begin(); e != vertexOf[theVertexNumber].edges.end(); ++e) {
                 if (vertexOf[theVertexNumber].pressure - e->weight < Pmin) {
                     // 此处tag标识是否有边无法通过, 如果有说明需要加放大器
                     tag = true;
                     break;
                 }
+            }
         }
-        // 如果有边无法通过, 加放大器
-        if (tag == true) {
+        // 如果必须要加放大器加放大器
+        if (tag) {
             boosterHere[level] = true;
-            ++number_of_boosters;
             vertexOf[theVertexNumber].pressure = Pmax;
-            if (number_of_boosters >= numberOfBoosters)
+            if (number_of_boosters + 1 >= numberOfBoosters)
                 return;
-            placeBooster(level + 1, number_of_boosters);
+            placeBooster(level + 1, number_of_boosters + 1);
         }
-        // 所有边都可以通过, 不需要加放大器
+        // 所有边都可以通过, 加/不加放大器
         else {
-            boosterHere[level] = false;
-            placeBooster(level + 1, number_of_boosters);
+            if (number_of_boosters + 1 >= numberOfBoosters) {
+                boosterHere[level] = false;
+                placeBooster(level + 1, number_of_boosters);
+            }
+            else {
+                // 加放大器
+                int pressure = vertexOf[theVertexNumber].pressure;
+                boosterHere[level] = true;
+                vertexOf[theVertexNumber].pressure = Pmax;
+                placeBooster(level + 1, number_of_boosters + 1);
+                // 不加放大器
+                boosterHere[level] = false;
+                vertexOf[theVertexNumber].pressure = pressure;
+                placeBooster(level + 1, number_of_boosters);
+            }
         }
     }
     // 输出结果
@@ -141,6 +151,7 @@ public:
         cout << numberOfBoosters;
     }
     // 可视化
+    /*
     void visual() const {
         ofstream out("1.dot");
         out << "digraph g {\n";
@@ -157,6 +168,7 @@ public:
         out.close();
         system("dot -Tjpg 1.dot -o solve1.jpg");
     }
+    */
 };
 
 #endif
