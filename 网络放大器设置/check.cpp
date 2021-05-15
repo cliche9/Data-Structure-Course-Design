@@ -71,6 +71,7 @@ void draw2() {
 }
 
 int main() {
+    // diff();
     draw1();
     draw2();
 

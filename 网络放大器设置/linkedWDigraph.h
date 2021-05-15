@@ -153,7 +153,7 @@ public:
         }
         // 如果必须要加放大器加放大器
         if (tag) {
-            boosterHere[level] = true;
+            boosterHere[theVertexNumber] = true;
             vertexOf[theVertexNumber].pressure = Pmax;
             if (number_of_boosters + 1 >= numberOfBoosters)
                 return;
@@ -162,17 +162,17 @@ public:
         // 所有边都可以通过, 加/不加放大器
         else {
             if (number_of_boosters + 1 >= numberOfBoosters) {
-                boosterHere[level] = false;
+                boosterHere[theVertexNumber] = false;
                 placeBooster(level + 1, number_of_boosters);
             }
             else {
                 // 加放大器
                 int pressure = vertexOf[theVertexNumber].pressure;
-                boosterHere[level] = true;
+                boosterHere[theVertexNumber] = true;
                 vertexOf[theVertexNumber].pressure = Pmax;
                 placeBooster(level + 1, number_of_boosters + 1);
                 // 不加放大器
-                boosterHere[level] = false;
+                boosterHere[theVertexNumber] = false;
                 vertexOf[theVertexNumber].pressure = pressure;
                 placeBooster(level + 1, number_of_boosters);
             }
@@ -230,7 +230,7 @@ public:
 
         numberOfBoosters = extensiveNode->numberOfBoosters;
         for (int i = numberOfVertex - 1; i > 1; --i) {
-            boosterHereFinal[i] = extensiveNode->boosterHere;
+            boosterHereFinal[sequence[extensiveNode->level - 1]] = extensiveNode->boosterHere;
             extensiveNode = extensiveNode->parent;
         }
     }
