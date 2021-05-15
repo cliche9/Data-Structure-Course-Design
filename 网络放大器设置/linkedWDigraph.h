@@ -13,7 +13,7 @@ struct wEdge {
     int weight;                 // 权值 - 消耗
     wEdge(int source = 0, int target = 0, int theWeight = 0): from(source), to(target), weight(theWeight) {}
 };
-
+// 顶点
 struct vertexNode {
     int number;                 // 编号
     int inDegree;               // 节点的入度, 用于拓扑序
@@ -24,16 +24,37 @@ struct vertexNode {
     }
 };
 
+// 分支定界用子集树节点
+struct subNode {
+    subNode *parent;            // 父节点
+    int level;                  // 所在子集树层级
+    bool boosterHere;           // 是否放放大器, 分支
+    int pressure;               // 油压值
+    int numberOfBoosters;       // 优先级
+    subNode(subNode *p, int lev, bool tag, int press, int num): parent(p), level(lev), boosterHere(tag), pressure(press), numberOfBoosters(num) {}
+};
+
+// 指针有序
+struct cmp {
+    bool operator() (const subNode *a,const subNode *b) {
+        return a->numberOfBoosters > b->numberOfBoosters;
+    }
+};
+
 class DAG {
 private:
     int numberOfVertex;         // 节点个数
     int numberOfEdges;          // 边的个数
     int Pmin, Pmax;             // 压力最小值 & 加压后的压力
     int numberOfBoosters;       // 加压器个数
-    vector<vertexNode> vertexOf;       // 节点集
-    vector<int> sequence;              // 节点访问顺序
-    vector<bool> boosterHere;          // 是否放石油放大器
-    vector<bool> boosterHereFinal;     // 最终结果
+    vector<vertexNode> vertexOf;        // 节点集
+    subNode *extensiveNode;             // 扩展节点
+    vector<subNode *> nodes;            // 用于delete
+    // 队列最小堆, 用于分支定界
+    priority_queue<subNode *, vector<subNode *>, cmp> minHeap;
+    vector<int> sequence;               // 节点访问顺序
+    vector<bool> boosterHere;           // 是否放石油放大器
+    vector<bool> boosterHereFinal;      // 最终结果
 public:
     DAG() {
         cin >> numberOfVertex >> numberOfEdges >> Pmax;
@@ -43,6 +64,7 @@ public:
         vertexOf.resize(numberOfVertex + 1);
         sequence.resize(numberOfVertex + 1);
         boosterHere.resize(numberOfVertex + 1);
+        boosterHereFinal.resize(numberOfVertex + 1);
         for (int i = 1; i <= numberOfVertex; ++i) {
             vertexOf[i].number = i;
             boosterHere[i] = false;
@@ -77,7 +99,7 @@ public:
                     q.push(e->to);
         }
     }
-    // 回溯放置放大器
+    // 回溯(dfs)放置放大器
     void placeBooster(int level, int number_of_boosters) {
         // 标识是否需要放放大器
         bool tag = false;
@@ -144,6 +166,57 @@ public:
                 vertexOf[theVertexNumber].pressure = pressure;
                 placeBooster(level + 1, number_of_boosters);
             }
+        }
+    }
+    // 分支定界(bfs/djikstra)放置放大器
+    void branchJudge() {
+        vertexOf[sequence[1]].pressure = Pmax;
+        extensiveNode = new subNode(nullptr, 1, false, Pmax, 0);
+        nodes.push_back(extensiveNode);
+        minHeap.push(extensiveNode);
+        int level = 2;
+        while (level < numberOfVertex) {
+            // 当前扩展节点油压值
+            int theVertexNumber = sequence[level];
+            vertexOf[theVertexNumber].pressure = 0;
+            // 求扩展节点油压初值
+            for (int i = 1; i < level; ++i) {
+                for (vector<wEdge>::iterator e = vertexOf[sequence[i]].edges.begin(); e != vertexOf[sequence[i]].edges.end(); ++e) {
+                    if (e->to == theVertexNumber) {
+                        subNode *curExtensiveNode = extensiveNode;
+                        // ????????
+                        for (int j = level - 1; j > i; --j)
+                            curExtensiveNode = curExtensiveNode->parent;
+                        // 需要求出到达该点的最大压力
+                        vertexOf[theVertexNumber].pressure = max(vertexOf[theVertexNumber].pressure, curExtensiveNode->pressure - e->weight);
+                    }
+                }
+            }
+            bool tag = false;
+            // 检查运输到子节点后油压是否 < Pmin
+            for (vector<wEdge>::iterator e = vertexOf[theVertexNumber].edges.begin(); e != vertexOf[theVertexNumber].edges.end(); ++e) {
+                if (vertexOf[theVertexNumber].pressure - e->weight < Pmin) {
+                    tag = true;
+                    break;
+                }
+            }
+            // 油压均符合条件
+            if (!tag) {
+                minHeap.push(new subNode(extensiveNode, level + 1, false, vertexOf[theVertexNumber].pressure, extensiveNode->numberOfBoosters));
+                minHeap.push(new subNode(extensiveNode, level + 1, true, Pmax, extensiveNode->numberOfBoosters + 1));
+            }
+            else
+                minHeap.push(new subNode(extensiveNode, level + 1, true, Pmax, extensiveNode->numberOfBoosters + 1));
+            extensiveNode = minHeap.top();
+            level = extensiveNode->level;
+            nodes.push_back(extensiveNode);
+            minHeap.pop();
+        }
+
+        numberOfBoosters = extensiveNode->numberOfBoosters;
+        for (int i = numberOfBoosters - 1; i >= 1; --i) {
+            boosterHereFinal[i] = extensiveNode->boosterHere;
+            extensiveNode = extensiveNode->parent;
         }
     }
     // 输出结果

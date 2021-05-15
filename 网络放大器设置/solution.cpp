@@ -6,8 +6,17 @@ void solution1() {
     graph.output();
 }
 
+void solution2() {
+    DAG graph;
+    graph.branchJudge();
+    graph.output();
+}
+
 int main() {
-    solution1();
+    freopen("网络放大器设置/data/input/input1.in", "r", stdin);
+    freopen("网络放大器设置/data/output/1.out", "w", stdout);
+    // solution1();
+    solution2();
 
     return 0;
 }
