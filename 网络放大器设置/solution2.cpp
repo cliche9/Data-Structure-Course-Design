@@ -3,7 +3,7 @@
 void solution2() {
     DAG graph;
     graph.branchJudge();
-    graph.output();
+    // graph.output();
 }
 
 int main() {

@@ -2,7 +2,6 @@
 #define _LINKED_W_DI_GRAPH_H_
 
 #include "../exception.h"
-#include <sstream>
 #include <vector>
 #include <queue>
 
@@ -240,24 +239,26 @@ public:
         cout << numberOfBoosters;
     }
     // 可视化
-    /*
-    void visual() const {
-        ofstream out("1.dot");
-        out << "digraph g {\n";
-        for (int i = 1; i < numberOfVertex; ++i) {
-            out << i;
-            out << "[label=\"node" << i << "\",style=filled, fillcolor=white];\n";
+    void visual() {
+        cout << "digraph g {\n";
+        for (int i = 1; i <= numberOfVertex; ++i) {
+            cout << i;
+            if (boosterHereFinal[i])
+                cout << "[label=\"node" << i << ": pre=" << vertexOf[i].pressure << "\",style=filled, fillcolor=red];\n";
+            else
+                cout << "[label=\"node" << i << ": pre=" << vertexOf[i].pressure << "\",style=filled, fillcolor=white];\n";
         }
         for (auto i = 1; i <= numberOfVertex; ++i) {
             for (auto& edge : vertexOf[i].edges) {
-                out << i << "->" << edge.to << "[label=\"cost=" << edge.weight << "\"];\n";
+                cout << i << "->" << edge.to << "[label=\"cost=" << edge.weight << "\"];\n";
             }
         }
-        out << "}\n";
-        out.close();
-        system("dot -Tjpg 1.dot -o solve1.jpg");
+        cout << "}\n";
     }
-    */
+    // 
+    vector<vertexNode> getVertex() const { return vertexOf; }
+    int getVertexNumber() const { return numberOfVertex; }
+    int getEdgeNumber() const { return numberOfEdges; }
 };
 
 #endif

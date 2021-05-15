@@ -3,7 +3,8 @@
 void solution1() {
     DAG graph;
     graph.placeBooster(1, 0);
-    graph.output();
+    graph.visual();
+    // graph.output();
 }
 
 int main() {
