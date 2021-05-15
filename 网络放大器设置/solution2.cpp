@@ -1,14 +1,9 @@
 #include "linkedWDigraph.h"
 
-void solution2() {
+int main() {
     DAG graph;
     graph.branchJudge();
     graph.visual();
     // graph.output();
-}
-
-int main() {
-    solution2();
-
     return 0;
 }

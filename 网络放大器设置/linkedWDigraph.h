@@ -136,7 +136,7 @@ public:
         for (int i = 1; i < level; ++i)
             for (vector<wEdge>::iterator e = vertexOf[sequence[i]].edges.begin(); e != vertexOf[sequence[i]].edges.end(); ++e)
                 if (e->to == theVertexNumber)
-                    // 需要求出到达该点的最大压力, 但是同时又要考虑是否能到达全部边, 这里需要考虑吗?
+                    // 需要求出到达该点的最大压力
                     vertexOf[theVertexNumber].pressure = max(vertexOf[theVertexNumber].pressure, vertexOf[sequence[i]].pressure - e->weight);
 
         if (vertexOf[theVertexNumber].pressure <= Pmin)
@@ -185,7 +185,7 @@ public:
         while (level < numberOfVertex) {
             // 当前扩展节点油压值
             int theVertexNumber = sequence[level];
-            vertexOf[theVertexNumber].pressure = 0;
+            int pressure = 0;
             // 求扩展节点油压初值
             for (int i = 1; i < level; ++i) {
                 for (vector<wEdge>::iterator e = vertexOf[sequence[i]].edges.begin(); e != vertexOf[sequence[i]].edges.end(); ++e) {
@@ -195,14 +195,14 @@ public:
                         for (int j = level - 1; j > i; --j)
                             curExtensiveNode = curExtensiveNode->parent;
                         // 需要求出到达该点的最大压力
-                        vertexOf[theVertexNumber].pressure = max(vertexOf[theVertexNumber].pressure, curExtensiveNode->pressure - e->weight);
+                        pressure = max(pressure, curExtensiveNode->pressure - e->weight);
                     }
                 }
             }
             bool tag = false;
             // 检查运输到子节点后油压是否 < Pmin
             for (vector<wEdge>::iterator e = vertexOf[theVertexNumber].edges.begin(); e != vertexOf[theVertexNumber].edges.end(); ++e) {
-                if (vertexOf[theVertexNumber].pressure - e->weight < Pmin) {
+                if (pressure - e->weight < Pmin) {
                     tag = true;
                     break;
                 }
@@ -211,7 +211,7 @@ public:
             // 油压均符合条件
             if (!tag) {
                 // 优先不放放大器
-                temp = new subNode(extensiveNode, level + 1, false, vertexOf[theVertexNumber].pressure, extensiveNode->numberOfBoosters);
+                temp = new subNode(extensiveNode, level + 1, false, pressure, extensiveNode->numberOfBoosters);
                 nodes.push_back(temp);
                 minHeap.push(temp);
                 temp = new subNode(extensiveNode, level + 1, true, Pmax, extensiveNode->numberOfBoosters + 1);
@@ -231,7 +231,6 @@ public:
         numberOfBoosters = extensiveNode->numberOfBoosters;
         for (int i = numberOfVertex - 1; i > 1; --i) {
             boosterHereFinal[i] = extensiveNode->boosterHere;
-            vertexOf[i].pressure = Pmax;
             extensiveNode = extensiveNode->parent;
         }
     }
@@ -241,6 +240,20 @@ public:
     }
     // 可视化
     void visual() {
+        for (int i = 2; i <= numberOfVertex; ++i) {
+            int theVertexNumber = sequence[i];
+            if (boosterHereFinal[theVertexNumber]) {
+                vertexOf[theVertexNumber].pressure = Pmax;
+                continue;
+            }
+            vertexOf[theVertexNumber].pressure = 0;
+            for (int j = 1; j < i; ++j) {
+                for (vector<wEdge>::iterator e = vertexOf[sequence[j]].edges.begin(); e != vertexOf[sequence[j]].edges.end(); ++e)
+                    if (e->to == theVertexNumber)
+                        // 需要求出到达该点的最大压力
+                        vertexOf[theVertexNumber].pressure = max(vertexOf[theVertexNumber].pressure, vertexOf[sequence[j]].pressure - e->weight);
+            }
+        }
         cout << "digraph g {\n";
         for (int i = 1; i <= numberOfVertex; ++i) {
             cout << i;
