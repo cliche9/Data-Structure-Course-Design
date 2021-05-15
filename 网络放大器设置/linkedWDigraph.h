@@ -231,6 +231,7 @@ public:
         numberOfBoosters = extensiveNode->numberOfBoosters;
         for (int i = numberOfVertex - 1; i > 1; --i) {
             boosterHereFinal[i] = extensiveNode->boosterHere;
+            vertexOf[i].pressure = Pmax;
             extensiveNode = extensiveNode->parent;
         }
     }
@@ -255,10 +256,6 @@ public:
         }
         cout << "}\n";
     }
-    // 
-    vector<vertexNode> getVertex() const { return vertexOf; }
-    int getVertexNumber() const { return numberOfVertex; }
-    int getEdgeNumber() const { return numberOfEdges; }
 };
 
 #endif
