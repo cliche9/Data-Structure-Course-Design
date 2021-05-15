@@ -78,6 +78,17 @@ public:
         }
         // 求出节点访问顺序
         topoSort();
+        // 设置源点初始变量
+        vertexOf[1].pressure = Pmax;
+        extensiveNode = new subNode(nullptr, 2, false, Pmax, 0);
+        nodes.push_back(extensiveNode);
+    }
+    // 析构
+    ~DAG() {
+        for (vector<subNode *>::iterator ptr = nodes.begin(); ptr != nodes.end(); ++ptr) {
+            delete *ptr;
+            *ptr = nullptr;
+        }
     }
     // 拓扑排序, 找出节点的访问顺序, 每个节点都要先访问完前面的节点再访问
     void topoSort() {
@@ -170,11 +181,8 @@ public:
     }
     // 分支定界(bfs/djikstra)放置放大器
     void branchJudge() {
-        vertexOf[sequence[1]].pressure = Pmax;
-        extensiveNode = new subNode(nullptr, 1, false, Pmax, 0);
-        nodes.push_back(extensiveNode);
-        minHeap.push(extensiveNode);
-        int level = 2;
+        // level记录的是该处理第几层的节点了, 比如level = 2, 说明该部分结果下, 下一个要处理的是sequence[2]
+        int level = extensiveNode->level;
         while (level < numberOfVertex) {
             // 当前扩展节点油压值
             int theVertexNumber = sequence[level];
@@ -184,7 +192,7 @@ public:
                 for (vector<wEdge>::iterator e = vertexOf[sequence[i]].edges.begin(); e != vertexOf[sequence[i]].edges.end(); ++e) {
                     if (e->to == theVertexNumber) {
                         subNode *curExtensiveNode = extensiveNode;
-                        // ????????
+                        // 找到该路线下, 前面保存结果的油压值
                         for (int j = level - 1; j > i; --j)
                             curExtensiveNode = curExtensiveNode->parent;
                         // 需要求出到达该点的最大压力
@@ -200,21 +208,29 @@ public:
                     break;
                 }
             }
+            subNode *temp = nullptr;
             // 油压均符合条件
             if (!tag) {
-                minHeap.push(new subNode(extensiveNode, level + 1, false, vertexOf[theVertexNumber].pressure, extensiveNode->numberOfBoosters));
-                minHeap.push(new subNode(extensiveNode, level + 1, true, Pmax, extensiveNode->numberOfBoosters + 1));
+                // 优先不放放大器
+                temp = new subNode(extensiveNode, level + 1, false, vertexOf[theVertexNumber].pressure, extensiveNode->numberOfBoosters);
+                nodes.push_back(temp);
+                minHeap.push(temp);
+                temp = new subNode(extensiveNode, level + 1, true, Pmax, extensiveNode->numberOfBoosters + 1);
+                nodes.push_back(temp);
+                minHeap.push(temp);
             }
-            else
-                minHeap.push(new subNode(extensiveNode, level + 1, true, Pmax, extensiveNode->numberOfBoosters + 1));
+            else {
+                temp = new subNode(extensiveNode, level + 1, true, Pmax, extensiveNode->numberOfBoosters + 1);
+                nodes.push_back(temp);
+                minHeap.push(temp);
+            }
             extensiveNode = minHeap.top();
             level = extensiveNode->level;
-            nodes.push_back(extensiveNode);
             minHeap.pop();
         }
 
         numberOfBoosters = extensiveNode->numberOfBoosters;
-        for (int i = numberOfBoosters - 1; i >= 1; --i) {
+        for (int i = numberOfVertex - 1; i > 1; --i) {
             boosterHereFinal[i] = extensiveNode->boosterHere;
             extensiveNode = extensiveNode->parent;
         }

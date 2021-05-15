@@ -2,7 +2,6 @@
 #include <cstdlib>
 using namespace std;
 
-// 44 92 97
 int main() {
     system("clang++ 网络放大器设置/solution.cpp -o 网络放大器设置/solution.cpp");
     for (int i = 1; i <= 100; i++) {
