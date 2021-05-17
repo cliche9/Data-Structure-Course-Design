@@ -3,6 +3,6 @@
 int main() {
     DAG graph;
     graph.branchJudge();
-    graph.output();
+    graph.visual();
     return 0;
 }

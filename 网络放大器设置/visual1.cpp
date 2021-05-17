@@ -2,7 +2,7 @@
 
 int main() {
     DAG graph;
-    graph.branchJudge();
-    graph.output();
+    graph.placeBooster(1, 0);
+    graph.visual();
     return 0;
 }
