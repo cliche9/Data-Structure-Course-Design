@@ -178,7 +178,7 @@ public:
             }
         }
     }
-    // 分支定界(bfs/djikstra)放置放大器
+    // 分支定界(priority_queue)放置放大器
     void branchJudge() {
         // level记录的是该处理第几层的节点了, 比如level = 2, 说明该部分结果下, 下一个要处理的是sequence[2]
         int level = extensiveNode->level;
