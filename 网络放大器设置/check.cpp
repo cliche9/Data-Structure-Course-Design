@@ -7,7 +7,7 @@ using namespace std;
 void diff() {
     system("clang++ solution1.cpp -o solution1");
     ofstream time1("data/time1.out");
-    for (int i = 1; i <= 100; i++) {
+    for (int i = 1; i <= 101; i++) {
         int s, e;
         cout << "正在测试数据" << i << endl;
         string name = to_string(i);
@@ -31,7 +31,7 @@ void diff() {
 
     ofstream time2("data/time2.out");
     system("clang++ solution2.cpp -o solution2");
-    for (int i = 1; i <= 100; i++) {
+    for (int i = 1; i <= 101; i++) {
         int s, e;
         cout << "正在测试数据" << i << endl;
         string name = to_string(i);

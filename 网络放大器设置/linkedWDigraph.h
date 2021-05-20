@@ -7,10 +7,9 @@
 
 // 有权边
 struct wEdge {
-    int from;                   // 起始点
     int to;                     // 目的点
     int weight;                 // 权值 - 消耗
-    wEdge(int source = 0, int target = 0, int theWeight = 0): from(source), to(target), weight(theWeight) {}
+    wEdge(int target = 0, int theWeight = 0): to(target), weight(theWeight) {}
 };
 // 顶点
 struct vertexNode {
@@ -73,7 +72,7 @@ public:
             int u, v, w;
             cin >> u >> v >> w;
             ++vertexOf[v].inDegree;
-            vertexOf[u].edges.push_back(wEdge(u, v, w));
+            vertexOf[u].edges.push_back(wEdge(v, w));
         }
         // 求出节点访问顺序
         topoSort();
@@ -240,6 +239,7 @@ public:
     }
     // 可视化
     void visual() {
+        // 获取每个点的压力
         for (int i = 2; i <= numberOfVertex; ++i) {
             int theVertexNumber = sequence[i];
             if (boosterHereFinal[theVertexNumber]) {
