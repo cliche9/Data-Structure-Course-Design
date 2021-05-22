@@ -269,52 +269,51 @@ int RBTree<K, E>::isRBTree() {
 	return 0;
 }
 
-template<class K, E>
-inline void RBTree<K, E>::insertReBalance(RBNode<K, E>* newRBNode)
-{
-	RBNode<K, E>* x = newRBNode;
-	while (x != root && x->parent->color == RED) {//当前节点不为根，且父节点为红，则祖父存在且为黑	
-		if (x->parent == x->parent->parent->leftChild) // 父节点为祖父节点之左子节点
-		{
-			RBNode<K, E>* uncel = x->parent->parent->rightChild;
-			if (uncel != nullptr&&uncel->color == RED) {// 叔叔节点存在，且为红
-				x->parent->color = BLACK, E;				// 更改父节点为黑色  
-				uncel->color = BLACK, E;                   // 更改伯父节点为黑色  
-				x->parent->parent->color = RED;			// 更改祖父节点为红色 
-				x = x->parent->parent;					//将祖父设为当前节点
+template<class K, class E>
+void RBTree<K, E>::insertReBalance(RBNode<K, E> *newRBNode) {
+	RBNode<K, E> *x = newRBNode;
+	while (x != root && x->parent->color == RED) {
+		// 当前节点不为根, 且父节点为红, 递归向上
+		if (x->parent == x->parent->parent->leftChild) {
+			// 父节点为祖父节点之左子节点
+			RBNode<K, E> *uncle = x->parent->parent->rightChild;
+			if (uncle != nullptr && uncle->color == RED) {
+				// 叔叔节点存在，且为红
+				x->parent->color = BLACK;			// 更改父节点为黑色  
+				uncle->color = BLACK;            	// 更改叔叔节点为黑色  
+				x->parent->parent->color = RED;		// 更改祖父节点为红色 
+				x = x->parent->parent;				// 将祖父设为当前节点
+				continue;							// 递归向上
 			}
-			else {//叔叔节点不存在或为黑色
-				if (x == x->parent->rightChild)   // 如果新节点为父节点之右子节点  
-				{
-					x = x->parent;
-					leftRotate(x);   // 第一个参数为左旋点  
-				}
-				x->parent->color = BLACK, E;     // 改变颜色  
-				x->parent->parent->color = RED;
-				rightRotate(x->parent->parent);    // 第一个参数为右旋点  
+			// 叔叔节点不存在或为黑色, 需要旋转, 单纯右旋或者先左旋后右旋
+			if (x == x->parent->rightChild) {
+				// 如果新节点为父节点之右子节点, 先左旋后右旋  
+				x = x->parent;
+				leftRotate(x);   					// 第一个参数为左旋点  
 			}
+			x->parent->color = BLACK;     			// 改变颜色  
+			x->parent->parent->color = RED;
+			rightRotate(x->parent->parent);    		// 第一个参数为右旋点  
 		}
-		else          // 父节点为祖父节点之右子节点  
-		{
-			RBNode<K, E>* uncel = x->parent->parent->leftChild;    // 令y为伯父节点  
-			if (uncel != nullptr&&uncel->color == RED)    // 有伯父节点，且为红  
-			{
-				x->parent->color = BLACK, E;           // 更改父节点为黑色  
-				uncel->color = BLACK, E;                   // 更改伯父节点为黑色  
+		else {
+			// 父节点为祖父节点之右子节点
+			RBNode<K, E> *uncle = x->parent->parent->leftChild;
+			if (uncle != nullptr && uncle->color == RED) {
+				// 叔叔节点存在, 且为红  
+				x->parent->color = BLACK;           // 更改父节点为黑色  
+				uncle->color = BLACK;               // 更改伯父节点为黑色  
 				x->parent->parent->color = RED;     // 更改祖父节点为红色  
-				x = x->parent->parent;          // 准备继续往上层检查  
+				x = x->parent->parent;          	// 准备继续往上层检查 
+				continue;
 			}
-			else    //叔叔节点不存在或为黑色  
+			if (x == x->parent->leftChild)        // 如果新节点为父节点之左子节点  
 			{
-				if (x == x->parent->leftChild)        // 如果新节点为父节点之左子节点  
-				{
-					x = x->parent;
-					rightRotate(x);    // 第一个参数为右旋点  
-				}
-				x->parent->color = BLACK, E;     // 改变颜色  
-				x->parent->parent->color = RED;
-				leftRotate(x->parent->parent);    // 第一个参数为左旋点  
+				x = x->parent;
+				rightRotate(x);    // 第一个参数为右旋点  
 			}
+			x->parent->color = BLACK, E;     // 改变颜色  
+			x->parent->parent->color = RED;
+			leftRotate(x->parent->parent);    // 第一个参数为左旋点  
 		}
 	}
 	root->color = BLACK, E;
