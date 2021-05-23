@@ -108,6 +108,7 @@ void RBTree<K, E>::insert(const K &theKey, const E &theElement) {
 	RBNode<K, E> *newRBNode = new RBNode<K, E>(theKey, theElement);
 	// 根节点
 	if (pre == nullptr) {
+		newRBNode->color = BLACK;
 		_root = newRBNode;
 		return;
 	}
