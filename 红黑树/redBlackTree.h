@@ -2,8 +2,9 @@
 #define _RBTREE_H_
 #define RED 0
 #define BLACK 1
-//必须实现<,>,==,拷贝构造，赋值函数
-#include<stack>
+#include <iostream>
+#include <stack>
+using namespace std;
 
 template <class K, class E>
 struct RBNode {
@@ -13,7 +14,7 @@ struct RBNode {
 	RBNode<K, E> *leftChild;
 	RBNode<K, E> *rightChild;
 	RBNode<K, E> *parent;
-	RBNode(K theKey = 0, E theValue = 0, RBNode<K, E> *p = nullptr): key(theKey), value(theValue), color(RED), leftChild(nullptr), rightChild(nullptr), parent(p) {};
+	RBNode(K theKey = 0, E theValue = 0, bool c = RED, RBNode<K, E> *p = nullptr): key(theKey), value(theValue), color(c), leftChild(nullptr), rightChild(nullptr), parent(p) {};
 	~RBNode() {};
 	bool operator>(const RBNode& _right) { return key < _right.key; };
 	bool operator<(const RBNode& _right) { return key > _right.key; };
@@ -24,18 +25,20 @@ struct RBNode {
 template<class K, class E>
 class RBTree {
 public:
-	RBTree(): root(nullptr), _size(0) {};
-	~RBTree() { RBTreefree(root); };
-	RBTree(const RBTree &);
-	RBTree& operator=(const RBTree &);
+	RBTree(): _root(nullptr), _size(0) {};
+	~RBTree() { RBTreefree(_root); };
+	RBTree(const RBTree<K, E> &);
+	RBTree<K, E>& operator=(const RBTree<K, E> &);
 	RBNode<K, E> *find(const K &) const;
 	void insert(const K &, const E &);
 	void erase(const K &);
+	RBNode<K, E> *root() const { return _root; }
 	int size() const { return _size; };
 	bool empty() const { return _size == 0; };
 	int isRBTree();
+	void inOrderTraverse();
 private:
-	RBNode<K, E> *root;
+	RBNode<K, E> *_root;
 	int _size;
 	// 判断是否是红黑树, 返回黑节点一列的个数
 	int isRBTree(RBNode<K, E> *);
@@ -49,15 +52,32 @@ private:
 	void insertReBalance(RBNode<K, E> *);
 	// 传参带有两个黑色属性
 	void eraseReBalance(RBNode<K, E> *, RBNode<K, E> *);
-	// 中序遍历
-	void InOrderTraverse();
 	// 释放二叉树
 	void RBTreefree(RBNode<K, E> *);
+	// 建立二叉树
+	RBNode<K, E> *createTree(RBNode<K, E> *);
 };
+
+template <class K, class E>
+RBTree<K, E>::RBTree(const RBTree<K, E> &theTree) {
+	RBTreefree(_root);
+	_root = createTree(theTree.root());
+	_size = theTree.size();
+}
+
+template <class K, class E>
+RBTree<K, E> &RBTree<K, E>::operator=(const RBTree<K, E> &theTree) {
+	if (this != &theTree) {
+		RBTreefree(_root);
+		_root = createTree(theTree.root());
+		_size = theTree.size();
+	}
+	return *this;
+}
 
 template<class K, class E>
 RBNode<K, E> *RBTree<K, E>::find(const K &theKey) const {
-	RBNode<K, E> *cur = root;
+	RBNode<K, E> *cur = _root;
 	while (cur != nullptr) {
 		if (cur->key == theKey)
 			break;
@@ -73,7 +93,7 @@ RBNode<K, E> *RBTree<K, E>::find(const K &theKey) const {
 template<class K, class E>
 void RBTree<K, E>::insert(const K &theKey, const E &theElement) {
 	RBNode<K, E> *pre = nullptr;
-	RBNode<K, E> *cur = root;
+	RBNode<K, E> *cur = _root;
 	while (cur != nullptr) {
 		pre = cur;
 		if (cur->key > theKey)
@@ -88,7 +108,7 @@ void RBTree<K, E>::insert(const K &theKey, const E &theElement) {
 	RBNode<K, E> *newRBNode = new RBNode<K, E>(theKey, theElement);
 	// 根节点
 	if (pre == nullptr) {
-		root = newRBNode;
+		_root = newRBNode;
 		return;
 	}
 	if (pre->key > theKey)
@@ -101,7 +121,7 @@ void RBTree<K, E>::insert(const K &theKey, const E &theElement) {
 
 template<class K, class E>
 void RBTree<K, E>::erase(const K &theKey) {
-	RBNode<K, E> *cur = root;
+	RBNode<K, E> *cur = _root;
 	while (cur != nullptr) {
 		if (cur->key == theKey)
 			break;
@@ -125,9 +145,9 @@ void RBTree<K, E>::erase(const K &theKey) {
 	// 处理过后只剩两种情况
 	if (cur->leftChild == nullptr && cur->rightChild == nullptr) {
 		// 无子树情况
-		if (cur == root) {
+		if (cur == _root) {
 			// 根节点特别处理
-			root = nullptr;
+			_root = nullptr;
 			delete cur;
 			cur = nullptr;
 			return;
@@ -145,21 +165,48 @@ void RBTree<K, E>::erase(const K &theKey) {
 	}
 	else {
 		// 单子树情况
-		RBNode<K, E> *childNode = (cur->leftChild == nullptr) ? cur->rightChild : cur->leftChild;
-		if (cur == root) {
+		RBNode<K, E> *chilchildode = (cur->leftChild == nullptr) ? cur->rightChild : cur->leftChild;
+		if (cur == _root) {
 			// 根节点
-			root = childNode;
-			root->color = BLACK;
+			_root = chilchildode;
+			_root->color = BLACK;
 			delete cur;
 			cur = nullptr;
 			return;
 		}
 		if (cur->parent->leftChild == cur)
-			cur->parent->leftChild = childNode;
+			cur->parent->leftChild = chilchildode;
 		else
-			cur->parent->rightChild = childNode;
-		childNode->parent = cur->parent;
-		eraseReBalance(childNode, cur->parent);
+			cur->parent->rightChild = chilchildode;
+		chilchildode->parent = cur->parent;
+		eraseReBalance(chilchildode, cur->parent);
+	}
+}
+
+template<class K, class E>
+int RBTree<K, E>::isRBTree() {
+	if (isBinarySearchTree(_root))
+		return isRBTree(_root);
+	return 0;
+}
+
+template<class K, class E>
+void RBTree<K, E>::inOrderTraverse() {
+	if (_root == nullptr)
+		return;
+	stack<RBNode<K, E> *> s;
+	RBNode<K, E> *cur = _root->leftChild;    // 指向当前要检查的节点    
+	s.push(_root);
+	while (cur != nullptr || !s.empty()) {
+		while (cur != nullptr) {
+			// 一直往左走
+			s.push(cur);
+			cur = cur->leftChild;
+		}
+		cur = s.top();
+		s.pop();
+		cout << "RBTree[" << cur->key << "] = " << cur->value << ",\n";
+		cur = cur->rightChild;
 	}
 }
 
@@ -186,6 +233,20 @@ int RBTree<K, E>::isRBTree(RBNode<K, E> *x) {
 }
 
 template<class K, class E>
+bool RBTree<K, E>::isBinarySearchTree(RBNode<K, E> *x) {
+	if (x == nullptr)
+		return true;
+	if (x->leftChild != nullptr && x->rightChild != nullptr)
+		return (x->leftChild->key < x->key) && (x->rightChild->key > x->key) && isBinarySearchTree(x->leftChild) && isBinarySearchTree(x->rightChild);
+	if (x->leftChild != nullptr && x->rightChild == nullptr)
+		return (x->leftChild->key < x->key) && isBinarySearchTree(x->leftChild);
+	if (x->leftChild == nullptr && x->rightChild != nullptr)
+		return (x->rightChild->key > x->key) && isBinarySearchTree(x->rightChild);
+	// 叶子节点
+	return true;
+}
+
+template<class K, class E>
 void RBTree<K, E>::leftRotate(RBNode<K, E> *x) {
 	/*
 	*	 px                              px
@@ -202,7 +263,7 @@ void RBTree<K, E>::leftRotate(RBNode<K, E> *x) {
 	RBNode<K, E> *ly = y->leftChild;
 	y->parent = x->parent;
 	if (y->parent == nullptr)
-		root = y;
+		_root = y;
 	else {
 		if (y->parent->leftChild == x)
 			y->parent->leftChild = y;
@@ -234,7 +295,7 @@ void RBTree<K, E>::rightRotate(RBNode<K, E> *x) {
 	RBNode<K, E> *ry = y->rightChild;
 	y->parent = x->parent;
 	if (y->parent == nullptr)
-		root = y;
+		_root = y;
 	else {
 		if (y->parent->leftChild == x)
 			y->parent->leftChild = y;
@@ -249,32 +310,12 @@ void RBTree<K, E>::rightRotate(RBNode<K, E> *x) {
 }
 
 template<class K, class E>
-bool RBTree<K, E>::isBinarySearchTree(RBNode<K, E> *x) {
-	if (x == nullptr)
-		return true;
-	if (x->leftChild != nullptr && x->rightChild != nullptr)
-		return (x->leftChild->key < x->key) && (x->rightChild->key > x->key) && isBinarySearchTree(x->leftChild) && isBinarySearchTree(x->rightChild);
-	if (x->leftChild != nullptr && x->rightChild == nullptr)
-		return (x->leftChild->key < x->key) && isBinarySearchTree(x->leftChild);
-	if (x->leftChild == nullptr && x->rightChild != nullptr)
-		return (x->rightChild->key > x->key) && isBinarySearchTree(x->rightChild);
-	// 叶子节点
-	return true;
-}
-
-template<class K, class E>
-int RBTree<K, E>::isRBTree() {
-	if (isBinarySearchTree(root))
-		return isRBTree(root);
-	return 0;
-}
-
-template<class K, class E>
 void RBTree<K, E>::insertReBalance(RBNode<K, E> *newRBNode) {
 	RBNode<K, E> *x = newRBNode;
-	while (x != root && x->parent->color == RED) {
+	while (x != _root && x->parent->color == RED) {
 		// 当前节点不为根, 且父节点为红, 递归向上
 		if (x->parent == x->parent->parent->leftChild) {
+			// 不存在祖父节点怎么办?
 			// 父节点为祖父节点之左子节点
 			RBNode<K, E> *uncle = x->parent->parent->rightChild;
 			if (uncle != nullptr && uncle->color == RED) {
@@ -289,11 +330,11 @@ void RBTree<K, E>::insertReBalance(RBNode<K, E> *newRBNode) {
 			if (x == x->parent->rightChild) {
 				// 如果新节点为父节点之右子节点, 先左旋后右旋  
 				x = x->parent;
-				leftRotate(x);   					// 第一个参数为左旋点  
+				leftRotate(x);   					// 左旋调整
 			}
 			x->parent->color = BLACK;     			// 改变颜色  
 			x->parent->parent->color = RED;
-			rightRotate(x->parent->parent);    		// 第一个参数为右旋点  
+			rightRotate(x->parent->parent);    		// 右旋实现平衡 
 		}
 		else {
 			// 父节点为祖父节点之右子节点
@@ -306,163 +347,139 @@ void RBTree<K, E>::insertReBalance(RBNode<K, E> *newRBNode) {
 				x = x->parent->parent;          	// 准备继续往上层检查 
 				continue;
 			}
-			if (x == x->parent->leftChild)        // 如果新节点为父节点之左子节点  
-			{
+			if (x == x->parent->leftChild) {
+				// 如果新节点为父节点之左子节点
 				x = x->parent;
-				rightRotate(x);    // 第一个参数为右旋点  
+				rightRotate(x);    					// 右旋调整
 			}
-			x->parent->color = BLACK, E;     // 改变颜色  
+			x->parent->color = BLACK;     			// 改变颜色  
 			x->parent->parent->color = RED;
-			leftRotate(x->parent->parent);    // 第一个参数为左旋点  
+			leftRotate(x->parent->parent);    		// 左旋实现平衡 
 		}
 	}
-	root->color = BLACK, E;
+	_root->color = BLACK;
 }
 
-template<class K, E>
-inline void RBTree<K, E>::eraseReBalance(RBNode<K, E>* dn, RBNode<K, E>* parent)
-{
-	RBNode<K, E> *brother;
-	//兄弟必定存在
-	while ((dn == nullptr || dn->color == BLACK, E) && dn != root) {//
-		if (parent->leftChild == dn) {//为左儿子的情况
-			brother = parent->rightChild;
-			//case1
-			if (brother->color == RED) {
+template<class K, class E>
+void RBTree<K, E>::eraseReBalance(RBNode<K, E> *theNode, RBNode<K, E> *parent) {
+	RBNode<K, E> *slibing;
+
+	while ((theNode == nullptr || theNode->color == BLACK) && theNode != _root) {
+		// 循环, 直到theNode = _root或者theNode->color = RED
+		if (parent->leftChild == theNode) {
+			// 删除的节点位置为左儿子的情况
+			slibing = parent->rightChild;
+			// case1: S为红, S为右子, 以P左旋, 转换为S为黑的情况
+			if (slibing->color == RED) {
 				parent->color = RED;
-				brother->color = BLACK, E;
+				slibing->color = BLACK;
 				leftRotate(parent);
-				brother = parent->rightChild;
+				slibing = parent->rightChild;
 			}
-			//case2,此时兄弟必为黑色
-			if ((brother->leftChild == nullptr || brother->leftChild->color == BLACK, E) &&
-				(brother->rightChild == nullptr || brother->rightChild->color == BLACK, E)) {
-				//黑色上移
-				brother->color = RED;
-				dn = parent;
-				parent = dn->parent;
+			// case2: S为黑, SL, SR全黑, 将S涂红, 使S树符合条件, 然后看P 
+			if ((slibing->leftChild == nullptr || slibing->leftChild->color == BLACK) &&
+				(slibing->rightChild == nullptr || slibing->rightChild->color == BLACK)) {
+				// S涂红
+				slibing->color = RED;
+				// 再看P是否符合条件
+				theNode = parent;
+				parent = theNode->parent;
+				continue;
 			}
-			else {
-				if (brother->leftChild != nullptr&&brother->leftChild->color == RED) {
-					//case3 右孩子黑色或空，左孩子红
-					brother->leftChild->color = BLACK, E;
-					brother->color = RED;
-					rightRotate(brother);
-					brother = parent->rightChild;
-				}
-				//case4 右孩子红
-				brother->color = parent->color;
-				parent->color = BLACK, E;
-				brother->rightChild->color = BLACK, E;
-				leftRotate(parent);
-				dn = root;
+			// case3: S为黑, SL为红
+			if (slibing->leftChild != nullptr && slibing->leftChild->color == RED) {
+				slibing->leftChild->color = BLACK;
+				slibing->color = RED;
+				rightRotate(slibing);				// 右旋调整
+				// 更新S
+				slibing = parent->rightChild;
 			}
+			// case4: SR为红
+			// 交换S和P的颜色
+			slibing->color = parent->color;
+			parent->color = BLACK;
+			// 右孩子涂黑, 然后旋转
+			slibing->rightChild->color = BLACK;
+			leftRotate(parent);						// 左旋平衡
+			theNode = _root;
 		}
 		else {
-			brother = parent->leftChild;
-			//case1
-			if (brother->color == RED) {
+			// 删除的节点位置为右孩子的情况
+			slibing = parent->leftChild;
+			// case1: S为红, S为左子, 以P右旋, 转换为S为黑的情况
+			if (slibing->color == RED) {
 				parent->color = RED;
-				brother->color = BLACK, E;
+				slibing->color = BLACK;
 				rightRotate(parent);
-				brother = parent->leftChild;
+				slibing = parent->leftChild;
 			}
-			//case2,此时兄弟必为黑色
-			if ((brother->leftChild == nullptr || brother->leftChild->color == BLACK, E) &&
-				(brother->rightChild == nullptr || brother->rightChild->color == BLACK, E)) {
-				//黑色上移
-				brother->color = RED;
-				dn = parent;
-				parent = dn->parent;
+			// case2: S为黑, SL, SR全黑, 将S涂红, 使S树符合条件, 然后看P 
+			if ((slibing->leftChild == nullptr || slibing->leftChild->color == BLACK) &&
+				(slibing->rightChild == nullptr || slibing->rightChild->color == BLACK)) {
+				// S涂红
+				slibing->color = RED;
+				// 再看P是否符合条件, 递归处理P
+				theNode = parent;
+				parent = theNode->parent;
+				continue;
 			}
-			else {
-				if (brother->rightChild != nullptr&&brother->rightChild->color == RED) {
-					//case3 左孩子黑色或空，右孩子红
-					brother->rightChild->color = BLACK, E;
-					brother->color = RED;
-					leftRotate(brother);
-					brother = parent->leftChild;
-				}
-				//case4 左孩子红
-				brother->color = parent->color;
-				parent->color = BLACK, E;
-				brother->leftChild->color = BLACK, E;
-				rightRotate(parent);
-				dn = root;
+			// case3: S为黑, SR为红
+			if (slibing->rightChild != nullptr && slibing->rightChild->color == RED) {
+				slibing->rightChild->color = BLACK;
+				slibing->color = RED;
+				leftRotate(slibing);				// 左旋调整到SL为红
+				// 更新S
+				slibing = parent->leftChild;
 			}
+			// case4: SL为红
+			// 交换S和P的颜色
+			slibing->color = parent->color;
+			parent->color = BLACK;
+			// 左孩子涂黑, 然后旋转
+			slibing->leftChild->color = BLACK;
+			rightRotate(parent);					// 右旋平衡
+			theNode = _root;
 		}
 	}
-	if (dn != nullptr) {
-		dn->color = BLACK, E;
-	}
+	// 将递归向上的P节点处理掉/处理_root
+	if (theNode != nullptr)
+		theNode->color = BLACK;
 }
 
-template<class K, E>
-inline void RBTree<K, E>::InOrderTraverse()
-{
-	if (!T)
-		return;
-	stacK, E<BiTree> s;
-	BiTree curr = T->leftChild;    // 指向当前要检查的节点    
-	s.push(T);
-	while (curr != NULL || !s.empty())
-	{
-		while (curr != NULL)    // 一直向左走    
-		{
-			s.push(curr);
-			curr = curr->leftChild;
-		}
-		curr = s.top();
-		s.pop();
-		cout << curr->data << "  ";
-		curr = curr->rightChild;
-	}
-}
-
-template<class K, E>
-inline void RBTree<K, E>::RBTreefree(RBNode<K, E>* x)
-{
+template<class K, class E>
+void RBTree<K, E>::RBTreefree(RBNode<K, E> *x) {
 	if (x == nullptr)
 		return;
-	int freenum = 0;
-	//树非空  
-	RBNode<K, E>* p = x, *temp;
-	std::stacK, E<RBNode<K, E>*> s;
-	while (!s.empty() || p)
-	{
-		if (p)
-		{
-			s.push(p);
-			p = p->leftChild;
+	int freeCount = 0;
+	RBNode<K, E> *cur = x;
+	RBNode<K, E> *temp = nullptr;
+	stack<RBNode<K, E> *> s;
+	while (!s.empty() || cur) {
+		if (cur) {
+			s.push(cur);
+			cur = cur->leftChild;
 		}
-		else
-		{
-			p = s.top();
+		else {
+			cur = s.top();
 			s.pop();
-			temp = p;
-			p = p->rightChild;
+			temp = cur;
+			cur = cur->rightChild;
 			delete temp;
-			++freenum;
+			++freeCount;
 		}
 	}
-	number -= freenum;
+	_size -= freeCount;
+	x = nullptr;
 }
 
-template<class K, E>
-inline bool RBNode<K, E>::operator>(const RBNode & _right)
-{
-	return _K, E > _right._K, E;
+template <class K, class E>
+RBNode<K, E> *RBTree<K, E>::createTree(RBNode<K, E> *root) {
+	if (root == nullptr)
+		return nullptr;
+	RBNode<K, E> *theRoot = new RBNode<K, E>(root->key, root->value, root->color);
+	theRoot->leftChild = createTree(root->leftChild);
+	theRoot->rightChild = createTree(root->rightChild);
+	return theRoot;
 }
 
-template<class K, E>
-inline bool RBNode<K, E>::operator<(const RBNode & _right)
-{
-	return _K, E < _right._K, E;
-}
-
-template<class K, E>
-inline bool RBNode<K, E>::operator==(const RBNode & _right)
-{
-	return _K, E == _right._K, E;
-}
 #endif
