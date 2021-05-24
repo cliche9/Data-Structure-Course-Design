@@ -28,7 +28,7 @@ struct RBNode {
 		value = e1;
 	};
 };
-
+/*
 template<class K, class V>
 class RBTreeIterator {
 public:
@@ -95,7 +95,7 @@ private:
 private:
 	RBNode<K, V> *_pNode;
 };
-
+*/
 template<class K, class V>
 class RBTree {
 public:
@@ -103,10 +103,10 @@ public:
 	~RBTree() { RBTreefree(_root); };
 	RBTree(const RBTree<K, V> &);
 	RBTree<K, V>& operator=(const RBTree<K, V> &);
-	RBTreeIterator<K, V> begin() { return RBTreeIterator<K, V>(_root); };
-	RBTreeIterator<K, V> end() { return RBTreeIterator<K, V>(nullptr); };
+	// RBTreeIterator<K, V> begin() { return RBTreeIterator<K, V>(_root); };
+	// RBTreeIterator<K, V> end() { return RBTreeIterator<K, V>(nullptr); };
 	RBNode<K, V> *find(const K &);
-	pair<RBTreeIterator<K, V>, bool> insert(const K &, const V &);
+	pair<RBNode<K, V> *, bool> insert(const K &, const V &);
 	void erase(const K &);
 	RBNode<K, V> *root() const { return _root; }
 	int size() const { return _size; };
@@ -173,7 +173,7 @@ RBNode<K, V> *RBTree<K, V>::find(const K &theKey) {
 }
 
 template<class K, class V>
-pair<RBTreeIterator<K, V>, bool> RBTree<K, V>::insert(const K &theKey, const V &theElement) {
+pair<RBNode<K, V> *, bool> RBTree<K, V>::insert(const K &theKey, const V &theValue) {
 	compareCount = 0;
 	RBNode<K, V> *pre = nullptr;
 	RBNode<K, V> *cur = _root;
@@ -184,17 +184,17 @@ pair<RBTreeIterator<K, V>, bool> RBTree<K, V>::insert(const K &theKey, const V &
 		else if (cur->key < theKey)
 			cur = cur->rightChild;
 		else
-			return;
+			return pair<RBNode<K, V> *, bool>(cur, false);
 		++compareCount;
 	}
 	// 新插入节点
 	++_size;
-	RBNode<K, V> *newRBNode = new RBNode<K, V>(theKey, theElement);
+	RBNode<K, V> *newRBNode = new RBNode<K, V>(theKey, theValue);
 	// 根节点
 	if (pre == nullptr) {
 		newRBNode->color = BLACK;
 		_root = newRBNode;
-		return;
+		return pair<RBNode<K, V> *, bool>(_root, true);
 	}
 	if (pre->key > theKey)
 		pre->leftChild = newRBNode;
@@ -202,6 +202,7 @@ pair<RBTreeIterator<K, V>, bool> RBTree<K, V>::insert(const K &theKey, const V &
 		pre->rightChild = newRBNode;
 	newRBNode->parent = pre;
 	insertReBalance(newRBNode);
+	return pair<RBNode<K, V> *, bool>(newRBNode, true);
 }
 
 template<class K, class V>

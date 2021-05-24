@@ -2,7 +2,7 @@
 #define _DICTIONARY_H_
 #include "redBlackTree.h"
 
-template <class K, class E>
+template <class K, class V>
 class dict {
 public:
     dict();
@@ -10,9 +10,12 @@ public:
     dict(const dict &theDict);
     dict &operator=(const dict &theDict);
     string &operator[](const string &theKey);
-    pair<
+    string &
+    pair<RBNode<K, V> *, bool> insert(const string &theKey, const string &theValue);
+    void erase(const string &theKey);
+
 private:
-    RBTree<K, E> rbTree;
+    RBTree<K, V> rbTree;
 };
 
 #endif
