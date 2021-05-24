@@ -295,7 +295,7 @@ void RBTree<K, V>::inOrderTraverse() {
 		}
 		cur = s.top();
 		s.pop();
-		cout << "RBTree[" << cur->key << "] = " << cur->value << ",\n";
+		cout << "RBTree[" << cur->key << "] = " << cur->value << ", color = " << cur->color << ";\n";
 		cur = cur->rightChild;
 	}
 }
