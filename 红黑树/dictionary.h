@@ -1,6 +1,8 @@
 #ifndef _DICTIONARY_H_
 #define _DICTIONARY_H_
 #include "redBlackTree.h"
+#include <fstream>
+#include <sstream>
 
 template <class K, class V>
 class dict {
@@ -16,8 +18,10 @@ public:
     bool empty() const { return rbTree.empty(); }
     RBTree<K, V> *theTree() { return &rbTree; }
     void menu();
+    void init();
 private:
     RBTree<K, V> rbTree;
+    void inputOneLine(string &k, string &v, stringstream &ss);
 };
 
 template <class K, class V>
@@ -52,6 +56,7 @@ void dict<K, V>::erase(const K &theKey) {
 
 template <class K, class V>
 void dict<K, V>::menu() {
+    init();
 	cout << "|==============================================|\n"
 	     << "|                   使用说明                   |\n"
 	     << "|         1.查找单词        2.删除单词         |\n"
@@ -81,8 +86,13 @@ void dict<K, V>::menu() {
                 break;
             }
             case 3: {
-                cin >> key >> value;
-                insert(key, value);
+                string oneLine;
+                getline(cin, oneLine);
+                stringstream ss(oneLine);
+                inputOneLine(key, value, ss);
+                pair<RBNode<K, V> *, bool> t = insert(key, value);
+                if (!t.second) 
+                    cout << key << "已存在:\n" << key << ": " << t.first->value << "\n";
                 break;
             }
             case 4:
@@ -90,6 +100,38 @@ void dict<K, V>::menu() {
             default:
                 cout << "Invalid operation.\n";
         }
+    }
+}
+
+template <class K, class V>
+void dict<K, V>::init() {
+    string path;
+    ifstream infile;
+    cout << "请输入词典文件路径: \n";
+    cin >> path;
+    infile.open(path);
+    while (!infile.is_open()) {
+        cout << "路径错误, 请重新输入: \n";
+        cin >> path;
+        infile.open(path);
+    }
+    string oneLine;
+    while (getline(infile, oneLine)) {
+        string key, value;
+        stringstream ss(oneLine);
+        inputOneLine(key, value, ss);
+        insert(key, value);
+    }
+    cout << "词典初始化完成!\n"; 
+}
+
+template <class K, class V>
+void dict<K, V>::inputOneLine(string &k, string &v, stringstream &ss) {
+    ss >> k;
+    string t;
+    while (ss >> t) {
+        t += " ";
+        v += t;
     }
 }
 
