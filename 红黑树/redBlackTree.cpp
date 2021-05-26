@@ -1,44 +1,69 @@
 #include "redBlackTree.h"
-#include <cstdlib>
+#include <map>
 
 int main() {
     // freopen("a.in", "r", stdin);
-    RBTree<string, string> t1;
-    string key, opt, value;
+    map<string, RBTree<string, string> *> treeSet;
+    string key, opt, value, treeName, t1, t2;
     while (true) {
         cin >> opt;
-        if (opt == "insert") {
+        if (opt == "create") {
+            cin >> treeName;
+            if (treeSet.count(treeName))
+                cout << "红黑树\"" << treeName << "\"已存在!\n";
+            else {
+                treeSet[treeName] = new RBTree<string, string>();
+                cout << "红黑树: \"" << treeName << "\"创建成功!\n";
+            }
+        } else if (opt == "merge") {
+            cin >> t1 >> t2;
+            cout << "请输入合并生成红黑树名称: ";
+            cin >> treeName;
+            if (treeSet.count(t1) && treeSet.count(t2)) {
+                treeSet[treeName] = RBTree<string, string>::merge(treeSet[t1], treeSet[t2]);
+                cout << "红黑树\"" << t1 << "\"与\"" << t2 << "\"合并成功, 得到\"" << treeName << "\"\n";
+            }
+            else
+                cout << "待合并的红黑树不存在!\n";
+        } else if (opt == "insert") {
+            cin >> treeName;
+            cout << "请输入插入节点的[key => value]: ";
             cin >> key >> value;
-            t1.insert(key, value);
-            cout << "Compare count of insert: " << t1.numberOfComparasion()
-                 << "\nRotate count of insert: " << t1.numberOfRotation() << endl; 
+            treeSet[treeName]->insert(key, value);
+            cout << "插入成功!\nCompare count of insert: " << treeSet[treeName]->numberOfComparasion()
+                 << "\nRotate count of insert: " << treeSet[treeName]->numberOfRotation() << endl; 
         } else if (opt == "erase") {
+            cin >> treeName;
+            cout << "请输入删除元素的key: ";
             cin >> key;
-            t1.erase(key);
-            cout << "Compare count of erase: " << t1.numberOfComparasion()
-                 << "\nRotate count of erase: " << t1.numberOfRotation() << endl; 
+            treeSet[treeName]->erase(key);
+            cout << "删除成功!\nCompare count of erase: " << treeSet[treeName]->numberOfComparasion()
+                 << "\nRotate count of erase: " << treeSet[treeName]->numberOfRotation() << endl; 
         } else if (opt == "find") {
+            cin >> treeName;
+            cout << "请输入查找节点的key: ";
             cin >> key;
-            RBNode<string, string> *theNode = t1.find(key);
+            RBNode<string, string> *theNode = treeSet[treeName]->find(key);
             if (theNode == nullptr)
                 cout << "Not found key : " << key << endl;
             else
                 cout << "[key: " << theNode->key << ", value: " << theNode->value << "]"
-                     << "\nCompare count of find: " << t1.numberOfComparasion() << endl;
+                     << "\nCompare count of find: " << treeSet[treeName]->numberOfComparasion() << endl;
         } else if (opt == "check") {
-            if (t1.isRBTree())
+            cin >> treeName;
+            if (treeSet[treeName]->isRBTree())
                 cout << "Valid RBTree.\n";
             else
                 cout << "Error, RBTree is invalid.\n";
         } else if (opt == "show") {
-            t1.inOrderTraverse();
-        } else if (opt == "visual") {
-            t1.visual();
-            system("dot -Tjpg 红黑树/data/1.dot -o 红黑树/data/1.jpg");
+            cin >> treeName;
+            treeSet[treeName]->inOrderTraverse();
         } else if (opt == "quit") {
             break;
-        } else 
+        } else {
             cout << "Invalid operation.\n";
+            fflush(stdin);
+        }
     }
 
     return 0;

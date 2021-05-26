@@ -4,6 +4,7 @@
 #define BLACK 1
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 #include <stack>
 using namespace std;
 
@@ -100,7 +101,7 @@ private:
 template<class K, class V>
 class RBTree {
 public:
-	RBTree(): _root(nullptr), _size(0), compareCount(0), rotateCount(0) {};
+	RBTree(RBNode<K, V> *root = nullptr, int size = 0): _root(root), _size(size), compareCount(0), rotateCount(0) {};
 	~RBTree() { RBTreefree(_root); };
 	RBTree(const RBTree<K, V> &);
 	RBTree<K, V>& operator=(const RBTree<K, V> &);
@@ -113,6 +114,8 @@ public:
 	int size() const { return _size; };
 	bool empty() const { return _size == 0; };
 	int isRBTree() const;
+	// 红黑树的合并
+	static RBTree<K, V> *merge(RBTree<K, V> *, RBTree<K, V> *);
 	void visual();
 	// 中序遍历-升序
 	void inOrderTraverse() const;	
@@ -139,11 +142,15 @@ private:
 	// 释放二叉树
 	void RBTreefree(RBNode<K, V> *);
 	// 建立二叉树
-	RBNode<K, V> *createTree(RBNode<K, V> *);
+	static RBNode<K, V> *createTree(RBNode<K, V> *);
+	// 基于有序数组建立二叉树
+	static RBNode<K, V> *createTree(pair<K, V> *, int, int, bool, RBNode<K, V> *);
 	// 可视化树
 	void printTree(RBNode<K, V> *);
 	// 可视化节点
 	void printNode(RBNode<K, V> *);
+	// 根据节点数获取树高度
+	static int height(int);
 };
 
 template <class K, class V>
@@ -289,12 +296,83 @@ int RBTree<K, V>::isRBTree() const{
 }
 
 template <class K, class V>
+RBTree<K, V> *RBTree<K, V>::merge(RBTree<K, V> *t1, RBTree<K, V> *t2) {
+	if (t1->empty() && t2->empty())
+		return nullptr;
+	if (t1->empty())
+		return t2;
+	if (t2->empty())
+		return t1;
+	RBNode<K, V> *r1 = t1->root(), *r2 = t2->root();
+	RBNode<K, V> *rb1[t1->size() + 1], *rb2[t2->size() + 1];
+	pair<K, V> nodes[t1->size() + t2->size() + 1];
+	stack<RBNode<K, V> *> s;
+	// 将节点有序存到数组里, 方便归并
+	s.push(r1);
+	r1 = r1->leftChild;
+	while (!s.empty()) {
+		int n = 0;
+		while (r1 != nullptr) {
+			s.push(r1);
+			r1 = r1->leftChild;
+		}
+		r1 = s.top();
+		s.pop();
+		rb1[++n] = r1;
+		r1 = r1->rightChild;
+	}
+	s.push(r2);
+	r2 = r2->leftChild;
+	while (!s.empty()) {
+		int n = 0;
+		while (r2 != nullptr) {
+			s.push(r2);
+			r2 = r2->leftChild;
+		}
+		r2 = s.top();
+		s.pop();
+		rb2[++n] = r2;
+		r2 = r2->rightChild;
+	}
+	// 归并到新数组
+	int i = 1, j = 1;
+	int n = 0;
+	while (i <= t1->size() && j <= t2->size()) {
+		if (rb1[i]->key < rb2[j]->key) {
+			nodes[++n] = pair<K, V>(rb1[i]->key, rb1[i]->value);
+			++i;
+		} else if (rb1[i]->key == rb2[j]->key) {
+			nodes[++n] = pair<K, V>(rb1[i]->key, rb1[i]->value + rb2[j]->value);
+			++i;
+			++j;
+		} else if (rb1[i]->key > rb2[j]->key) {
+			nodes[++n] = pair<K, V>(rb2[j]->key, rb2[j]->value);
+			++j;
+		}
+	}
+	if (i <= t1->size()) {
+		nodes[++n] = pair<K, V>(rb1[i]->key, rb1[i]->value);
+		++i;
+	}
+	if (j <= t2->size()) {
+		nodes[++n] = pair<K, V>(rb2[j]->key, rb2[j]->value);
+		++j;
+	}
+	t1->~RBTree();
+	t2->~RBTree();
+	// 奇数高度从红色开始涂
+	bool color = ( (RBTree<K, V>::height(n) & 1) == 0 ) ? BLACK : RED;
+	return new RBTree<K, V>(createTree(nodes, 1, n, color, nullptr), n);
+}
+
+template <class K, class V>
 void RBTree<K, V>::visual() {
 	outfile.open("红黑树/data/1.dot");
 	outfile << "digraph g {\nsplines=false;\n";
 	printTree(_root);
 	outfile << "}\n";
 	outfile.close();
+	system("dot -Tjpg 红黑树/data/1.dot -o 红黑树/data/1.jpg");
 }
 
 template <class K, class V>
@@ -601,6 +679,17 @@ RBNode<K, V> *RBTree<K, V>::createTree(RBNode<K, V> *root) {
 }
 
 template <class K, class V>
+RBNode<K, V> *RBTree<K, V>::createTree(pair<K, V> *nodes, int start, int end, bool color, RBNode<K, V> *parent) {
+	if (start > end)
+		return nullptr;
+	int mid = (start + end) / 2;
+	RBNode<K, V> *root = new RBNode<K, V>(nodes[mid].first, nodes[mid].second, color, parent);
+	root->leftChild = createTree(nodes, start, mid - 1, !color, root);
+	root->rightChild = createTree(nodes, mid + 1, end, !color, root);
+	return root;
+}
+
+template <class K, class V>
 void RBTree<K, V>::printTree(RBNode<K, V> *root) {
 	if (root == nullptr)
 		return;
@@ -625,6 +714,16 @@ void RBTree<K, V>::printNode(RBNode<K, V> *x) {
 	else
 		outfile << "node[shape=record, style=filled, fillcolor=red, fontcolor=white];\n";
 	outfile << x->key << "[label=\"<f0> | <f1> " << x->key << " | <f2> \"];\n";
+}
+
+template <class K, class V>
+int RBTree<K, V>::height(int size) {
+	int n = size, h = 0;
+	while (n != 0) {
+		++h;
+		n >>= 1;
+	}
+	return h;
 }
 
 #endif
