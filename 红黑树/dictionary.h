@@ -7,7 +7,8 @@
 template <class K, class V>
 class dict {
 public:
-    dict() {};
+    dict(string name): dictName(name) {}
+    dict(RBTree<K, V> *theTree, string name): rbTree(theTree->root(), theTree->size()), dictName(name) {};
     dict(const dict<K, V> &theDict): rbTree(theDict.rbTree) {};
     dict &operator=(const dict<K, V> &theDict);
     V &operator[](const K &theKey);
@@ -17,10 +18,12 @@ public:
     int size() const { return rbTree.size(); }
     bool empty() const { return rbTree.empty(); }
     RBTree<K, V> *theTree() { return &rbTree; }
+    static dict<K, V> *merge(dict<K, V> *d1, dict<K, V> *d2, string name);
     void menu();
     void init();
 private:
     RBTree<K, V> rbTree;
+    string dictName;
     void inputOneLine(string &k, string &v, stringstream &ss);
     void visual();
 };
@@ -56,8 +59,12 @@ void dict<K, V>::erase(const K &theKey) {
 }
 
 template <class K, class V>
+dict<K, V> *dict<K, V>::merge(dict<K, V> *d1, dict<K, V> *d2, string name) {
+    return new dict<K, V>(RBTree<K, V>::merge(d1->theTree(), d2->theTree()), name);
+}
+
+template <class K, class V>
 void dict<K, V>::menu() {
-    init();
 	cout << "|==============================================|\n"
 	     << "|                   使用说明                   |\n"
 	     << "|         1.查找单词        2.删除单词         |\n"
@@ -70,6 +77,7 @@ void dict<K, V>::menu() {
     V value;
     string opt;
     while (true) {
+        visual();
         cin >> opt;
         if (opt == "1") {
             cin >> key;
@@ -98,7 +106,6 @@ void dict<K, V>::menu() {
             cout << "Invalid operation.\n";
             fflush(stdin);
         }
-        visual();
     }
 }
 
@@ -122,7 +129,6 @@ void dict<K, V>::init() {
         insert(key, value);
     }
     cout << "词典初始化完成!\n";
-    visual();
 }
 
 template <class K, class V>
@@ -137,8 +143,7 @@ void dict<K, V>::inputOneLine(string &k, string &v, stringstream &ss) {
 
 template <class K, class V>
 void dict<K, V>::visual() {
-    rbTree.visual();
-    system("dot -Tjpg 红黑树/data/1.dot -o 红黑树/data/1.jpg");
+    rbTree.visual(dictName);
 }
 
 #endif
