@@ -22,6 +22,7 @@ public:
 private:
     RBTree<K, V> rbTree;
     void inputOneLine(string &k, string &v, stringstream &ss);
+    void visual();
 };
 
 template <class K, class V>
@@ -67,39 +68,37 @@ void dict<K, V>::menu() {
 	     << "|==============================================|\n\n\n";
     K key;
     V value;
-    int opt;
+    string opt;
     while (true) {
         cin >> opt;
-        switch(opt) {
-            case 1: {
-                cin >> key;
-                RBNode<string, string> *theNode = find(key);
-                if (theNode == nullptr)
-                    cout << "Not found word: " << key << endl;
-                else
-                    cout << theNode->key << ": " << theNode->value << "\n";
-                break;
-            }
-            case 2: {
-                cin >> key;
-                erase(key);
-                break;
-            }
-            case 3: {
-                string oneLine;
-                getline(cin, oneLine);
-                stringstream ss(oneLine);
-                inputOneLine(key, value, ss);
-                pair<RBNode<K, V> *, bool> t = insert(key, value);
-                if (!t.second) 
-                    cout << key << "已存在:\n" << key << ": " << t.first->value << "\n";
-                break;
-            }
-            case 4:
-                return;
-            default:
-                cout << "Invalid operation.\n";
+        if (opt == "1") {
+            cin >> key;
+            RBNode<string, string> *theNode = find(key);
+            if (theNode == nullptr)
+                cout << "Not found word: " << key << endl;
+            else
+                cout << theNode->key << ": " << theNode->value << "\n";
         }
+        else if (opt == "2") {
+            cin >> key;
+            erase(key);
+        }
+        else if (opt == "3") {
+            string oneLine;
+            getline(cin, oneLine);
+            stringstream ss(oneLine);
+            inputOneLine(key, value, ss);
+            pair<RBNode<K, V> *, bool> t = insert(key, value);
+            if (!t.second) 
+                cout << key << "已存在:\n" << key << ": " << t.first->value << "\n";
+        }
+        else if (opt == "4")
+            return;
+        else {
+            cout << "Invalid operation.\n";
+            fflush(stdin);
+        }
+        visual();
     }
 }
 
@@ -122,7 +121,8 @@ void dict<K, V>::init() {
         inputOneLine(key, value, ss);
         insert(key, value);
     }
-    cout << "词典初始化完成!\n"; 
+    cout << "词典初始化完成!\n";
+    visual();
 }
 
 template <class K, class V>
@@ -133,6 +133,12 @@ void dict<K, V>::inputOneLine(string &k, string &v, stringstream &ss) {
         t += " ";
         v += t;
     }
+}
+
+template <class K, class V>
+void dict<K, V>::visual() {
+    rbTree.visual();
+    system("dot -Tjpg 红黑树/data/1.dot -o 红黑树/data/1.jpg");
 }
 
 #endif

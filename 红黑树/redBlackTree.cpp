@@ -1,4 +1,5 @@
 #include "redBlackTree.h"
+#include <cstdlib>
 
 int main() {
     // freopen("a.in", "r", stdin);
@@ -31,6 +32,9 @@ int main() {
                 cout << "Error, RBTree is invalid.\n";
         } else if (opt == "show") {
             t1.inOrderTraverse();
+        } else if (opt == "visual") {
+            t1.visual();
+            system("dot -Tjpg 红黑树/data/1.dot -o 红黑树/data/1.jpg");
         } else if (opt == "quit") {
             break;
         } else 

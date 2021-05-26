@@ -3,6 +3,7 @@
 #define RED 0
 #define BLACK 1
 #include <iostream>
+#include <fstream>
 #include <stack>
 using namespace std;
 
@@ -99,7 +100,7 @@ private:
 template<class K, class V>
 class RBTree {
 public:
-	RBTree(): _root(nullptr), _size(0) {};
+	RBTree(): _root(nullptr), _size(0), compareCount(0), rotateCount(0) {};
 	~RBTree() { RBTreefree(_root); };
 	RBTree(const RBTree<K, V> &);
 	RBTree<K, V>& operator=(const RBTree<K, V> &);
@@ -111,8 +112,10 @@ public:
 	RBNode<K, V> *root() const { return _root; }
 	int size() const { return _size; };
 	bool empty() const { return _size == 0; };
-	int isRBTree();
-	void inOrderTraverse();
+	int isRBTree() const;
+	void visual();
+	// 中序遍历-升序
+	void inOrderTraverse() const;	
 	int numberOfRotation() const { return rotateCount; };
 	int numberOfComparasion() const { return compareCount; }
 private:
@@ -120,10 +123,11 @@ private:
 	int _size;
 	int rotateCount;
 	int compareCount;
+	ofstream outfile;
 	// 判断是否是红黑树, 返回黑节点一列的个数
-	int isRBTree(RBNode<K, V> *);
+	int isRBTree(RBNode<K, V> *) const;
 	// 判断是否是二叉搜索树
-	bool isBinarySearchTree(RBNode<K, V> *);
+	bool isBinarySearchTree(RBNode<K, V> *) const;
 	// 左旋
 	void leftRotate(RBNode<K, V> *);
 	// 右旋
@@ -136,6 +140,10 @@ private:
 	void RBTreefree(RBNode<K, V> *);
 	// 建立二叉树
 	RBNode<K, V> *createTree(RBNode<K, V> *);
+	// 可视化树
+	void printTree(RBNode<K, V> *);
+	// 可视化节点
+	void printNode(RBNode<K, V> *);
 };
 
 template <class K, class V>
@@ -155,7 +163,7 @@ RBTree<K, V> &RBTree<K, V>::operator=(const RBTree<K, V> &theTree) {
 	return *this;
 }
 
-template<class K, class V>
+template <class K, class V>
 RBNode<K, V> *RBTree<K, V>::find(const K &theKey) {
 	compareCount = 0;
 	RBNode<K, V> *cur = _root;
@@ -172,7 +180,7 @@ RBNode<K, V> *RBTree<K, V>::find(const K &theKey) {
 	return cur;
 }
 
-template<class K, class V>
+template <class K, class V>
 pair<RBNode<K, V> *, bool> RBTree<K, V>::insert(const K &theKey, const V &theValue) {
 	compareCount = 0;
 	RBNode<K, V> *pre = nullptr;
@@ -205,7 +213,7 @@ pair<RBNode<K, V> *, bool> RBTree<K, V>::insert(const K &theKey, const V &theVal
 	return pair<RBNode<K, V> *, bool>(newRBNode, true);
 }
 
-template<class K, class V>
+template <class K, class V>
 void RBTree<K, V>::erase(const K &theKey) {
 	compareCount = 0;
 	RBNode<K, V> *cur = _root;
@@ -273,15 +281,24 @@ void RBTree<K, V>::erase(const K &theKey) {
 	}
 }
 
-template<class K, class V>
-int RBTree<K, V>::isRBTree() {
+template <class K, class V>
+int RBTree<K, V>::isRBTree() const{
 	if (isBinarySearchTree(_root))
 		return isRBTree(_root);
 	return 0;
 }
 
-template<class K, class V>
-void RBTree<K, V>::inOrderTraverse() {
+template <class K, class V>
+void RBTree<K, V>::visual() {
+	outfile.open("红黑树/data/1.dot");
+	outfile << "digraph g {\nsplines=false;\n";
+	printTree(_root);
+	outfile << "}\n";
+	outfile.close();
+}
+
+template <class K, class V>
+void RBTree<K, V>::inOrderTraverse() const {
 	if (_root == nullptr)
 		return;
 	stack<RBNode<K, V> *> s;
@@ -295,13 +312,13 @@ void RBTree<K, V>::inOrderTraverse() {
 		}
 		cur = s.top();
 		s.pop();
-		cout << "RBTree[" << cur->key << "] = " << cur->value << ", color = " << cur->color << ";\n";
+		cout << "RBTree[" << cur->key << "]: " << cur->value << endl;
 		cur = cur->rightChild;
 	}
 }
 
-template<class K, class V>
-int RBTree<K, V>::isRBTree(RBNode<K, V> *x) {
+template <class K, class V>
+int RBTree<K, V>::isRBTree(RBNode<K, V> *x) const {
 	// 空节点当做黑节点
 	if (x == nullptr)
 		return 1;
@@ -322,8 +339,8 @@ int RBTree<K, V>::isRBTree(RBNode<K, V> *x) {
 		return left + 1;
 }
 
-template<class K, class V>
-bool RBTree<K, V>::isBinarySearchTree(RBNode<K, V> *x) {
+template <class K, class V>
+bool RBTree<K, V>::isBinarySearchTree(RBNode<K, V> *x) const {
 	if (x == nullptr)
 		return true;
 	if (x->leftChild != nullptr && x->rightChild != nullptr)
@@ -336,7 +353,7 @@ bool RBTree<K, V>::isBinarySearchTree(RBNode<K, V> *x) {
 	return true;
 }
 
-template<class K, class V>
+template <class K, class V>
 void RBTree<K, V>::leftRotate(RBNode<K, V> *x) {
 	/*
 	*	 px                              px
@@ -367,7 +384,7 @@ void RBTree<K, V>::leftRotate(RBNode<K, V> *x) {
 		ly->parent = x;
 }
 
-template<class K, class V>
+template <class K, class V>
 void RBTree<K, V>::rightRotate(RBNode<K, V> *x) {
 	/*
 	*	 	 px                           px
@@ -399,7 +416,7 @@ void RBTree<K, V>::rightRotate(RBNode<K, V> *x) {
 		ry->parent = x;
 }
 
-template<class K, class V>
+template <class K, class V>
 void RBTree<K, V>::insertReBalance(RBNode<K, V> *newRBNode) {
 	rotateCount = 0;
 	RBNode<K, V> *x = newRBNode;
@@ -455,7 +472,7 @@ void RBTree<K, V>::insertReBalance(RBNode<K, V> *newRBNode) {
 	_root->color = BLACK;
 }
 
-template<class K, class V>
+template <class K, class V>
 void RBTree<K, V>::eraseReBalance(RBNode<K, V> *theNode, RBNode<K, V> *parent) {
 	rotateCount = 0;
 	RBNode<K, V> *slibing;
@@ -547,7 +564,7 @@ void RBTree<K, V>::eraseReBalance(RBNode<K, V> *theNode, RBNode<K, V> *parent) {
 		theNode->color = BLACK;
 }
 
-template<class K, class V>
+template <class K, class V>
 void RBTree<K, V>::RBTreefree(RBNode<K, V> *x) {
 	if (x == nullptr)
 		return;
@@ -581,6 +598,33 @@ RBNode<K, V> *RBTree<K, V>::createTree(RBNode<K, V> *root) {
 	theRoot->leftChild = createTree(root->leftChild);
 	theRoot->rightChild = createTree(root->rightChild);
 	return theRoot;
+}
+
+template <class K, class V>
+void RBTree<K, V>::printTree(RBNode<K, V> *root) {
+	if (root == nullptr)
+		return;
+	if (root == _root)
+		printNode(root);
+	if (root->leftChild) {
+		printNode(root->leftChild);
+		outfile << root->key << ":f0:sw->" << root->leftChild->key << ":f1;\n";
+	}
+	if (root->rightChild) {
+		printNode(root->rightChild);
+		outfile << root->key << ":f2:se->" << root->rightChild->key << ":f1;\n";
+	}
+	printTree(root->leftChild);
+	printTree(root->rightChild);
+}
+
+template <class K, class V>
+void RBTree<K, V>::printNode(RBNode<K, V> *x) {
+	if (x->color == BLACK)
+		outfile << "node[shape=record, style=filled, fillcolor=black, fontcolor=white];\n";
+	else
+		outfile << "node[shape=record, style=filled, fillcolor=red, fontcolor=white];\n";
+	outfile << x->key << "[label=\"<f0> | <f1> " << x->key << " | <f2> \"];\n";
 }
 
 #endif
