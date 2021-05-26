@@ -2,7 +2,7 @@
 #include <map>
 
 int main() {
-    // freopen("a.in", "r", stdin);
+    freopen("红黑树/data/a.in", "r", stdin);
     map<string, RBTree<string, string> *> treeSet;
     string key, opt, value, treeName, t1, t2;
     while (true) {
@@ -22,6 +22,8 @@ int main() {
             if (treeSet.count(t1) && treeSet.count(t2)) {
                 treeSet[treeName] = RBTree<string, string>::merge(treeSet[t1], treeSet[t2]);
                 cout << "红黑树\"" << t1 << "\"与\"" << t2 << "\"合并成功, 得到\"" << treeName << "\"\n";
+                treeSet.erase(t1);
+                treeSet.erase(t2);
             }
             else
                 cout << "待合并的红黑树不存在!\n";
@@ -30,15 +32,13 @@ int main() {
             cout << "请输入插入节点的[key => value]: ";
             cin >> key >> value;
             treeSet[treeName]->insert(key, value);
-            cout << "插入成功!\nCompare count of insert: " << treeSet[treeName]->numberOfComparasion()
-                 << "\nRotate count of insert: " << treeSet[treeName]->numberOfRotation() << endl; 
+            cout << "插入成功!\n";
         } else if (opt == "erase") {
             cin >> treeName;
             cout << "请输入删除元素的key: ";
             cin >> key;
             treeSet[treeName]->erase(key);
-            cout << "删除成功!\nCompare count of erase: " << treeSet[treeName]->numberOfComparasion()
-                 << "\nRotate count of erase: " << treeSet[treeName]->numberOfRotation() << endl; 
+            cout << "删除成功!\n";
         } else if (opt == "find") {
             cin >> treeName;
             cout << "请输入查找节点的key: ";
@@ -47,8 +47,7 @@ int main() {
             if (theNode == nullptr)
                 cout << "Not found key : " << key << endl;
             else
-                cout << "[key: " << theNode->key << ", value: " << theNode->value << "]"
-                     << "\nCompare count of find: " << treeSet[treeName]->numberOfComparasion() << endl;
+                cout << "[key: " << theNode->key << ", value: " << theNode->value << "]\n";
         } else if (opt == "check") {
             cin >> treeName;
             if (treeSet[treeName]->isRBTree())
@@ -64,6 +63,8 @@ int main() {
             cout << "Invalid operation.\n";
             fflush(stdin);
         }
+        for (auto &t : treeSet)
+            t.second->visual(t.first);
     }
 
     return 0;

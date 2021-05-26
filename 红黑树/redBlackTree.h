@@ -116,7 +116,7 @@ public:
 	int isRBTree() const;
 	// 红黑树的合并
 	static RBTree<K, V> *merge(RBTree<K, V> *, RBTree<K, V> *);
-	void visual();
+	void visual(string name);
 	// 中序遍历-升序
 	void inOrderTraverse() const;	
 	int numberOfRotation() const { return rotateCount; };
@@ -304,60 +304,57 @@ RBTree<K, V> *RBTree<K, V>::merge(RBTree<K, V> *t1, RBTree<K, V> *t2) {
 	if (t2->empty())
 		return t1;
 	RBNode<K, V> *r1 = t1->root(), *r2 = t2->root();
-	RBNode<K, V> *rb1[t1->size() + 1], *rb2[t2->size() + 1];
+	pair<K, V> rb1[t1->size() + 1], rb2[t2->size() + 1];
 	pair<K, V> nodes[t1->size() + t2->size() + 1];
 	stack<RBNode<K, V> *> s;
+	int n = 0;
 	// 将节点有序存到数组里, 方便归并
 	s.push(r1);
 	r1 = r1->leftChild;
-	while (!s.empty()) {
-		int n = 0;
+	while (r1 != nullptr || !s.empty()) {
 		while (r1 != nullptr) {
 			s.push(r1);
 			r1 = r1->leftChild;
 		}
 		r1 = s.top();
 		s.pop();
-		rb1[++n] = r1;
+		rb1[++n] = pair<K, V>(r1->key, r1->value);
 		r1 = r1->rightChild;
 	}
+	n = 0;
 	s.push(r2);
 	r2 = r2->leftChild;
-	while (!s.empty()) {
-		int n = 0;
+	while (r2 != nullptr || !s.empty()) {
 		while (r2 != nullptr) {
 			s.push(r2);
 			r2 = r2->leftChild;
 		}
 		r2 = s.top();
 		s.pop();
-		rb2[++n] = r2;
+		rb2[++n] = pair<K, V>(r2->key, r2->value);
 		r2 = r2->rightChild;
 	}
+	n = 0;
 	// 归并到新数组
+	int size_1 = t1->size(), size_2 = t2->size();
 	int i = 1, j = 1;
-	int n = 0;
-	while (i <= t1->size() && j <= t2->size()) {
-		if (rb1[i]->key < rb2[j]->key) {
-			nodes[++n] = pair<K, V>(rb1[i]->key, rb1[i]->value);
-			++i;
-		} else if (rb1[i]->key == rb2[j]->key) {
-			nodes[++n] = pair<K, V>(rb1[i]->key, rb1[i]->value + rb2[j]->value);
+	while (i <= size_1 && j <= size_2) {
+		if (rb1[i].first == rb2[j].first) {
+			nodes[++n] = pair<K, V>(rb1[i].first, rb1[i].second + rb2[j].second);
 			++i;
 			++j;
-		} else if (rb1[i]->key > rb2[j]->key) {
-			nodes[++n] = pair<K, V>(rb2[j]->key, rb2[j]->value);
+		} else if (rb1[i].first < rb2[j].first) {
+			nodes[++n] = rb1[i];
+			++i;
+		} else {
+			nodes[++n] = rb2[j];
 			++j;
 		}
 	}
-	if (i <= t1->size()) {
-		nodes[++n] = pair<K, V>(rb1[i]->key, rb1[i]->value);
-		++i;
-	}
-	if (j <= t2->size()) {
-		nodes[++n] = pair<K, V>(rb2[j]->key, rb2[j]->value);
-		++j;
-	}
+	while (i <= size_1)
+		nodes[++n] = rb1[i++];
+	while (j <= size_2)
+		nodes[++n] = rb2[j++];
 	t1->~RBTree();
 	t2->~RBTree();
 	// 奇数高度从红色开始涂
@@ -366,13 +363,14 @@ RBTree<K, V> *RBTree<K, V>::merge(RBTree<K, V> *t1, RBTree<K, V> *t2) {
 }
 
 template <class K, class V>
-void RBTree<K, V>::visual() {
-	outfile.open("红黑树/data/1.dot");
+void RBTree<K, V>::visual(string name) {
+	outfile.open("红黑树/data/" + name + ".dot");
 	outfile << "digraph g {\nsplines=false;\n";
 	printTree(_root);
 	outfile << "}\n";
 	outfile.close();
-	system("dot -Tjpg 红黑树/data/1.dot -o 红黑树/data/1.jpg");
+	string todo = "dot -Tjpg 红黑树/data/" + name + ".dot -o 红黑树/data/" + name + ".jpg";
+	system(todo.c_str());
 }
 
 template <class K, class V>
