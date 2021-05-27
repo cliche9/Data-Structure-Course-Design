@@ -359,7 +359,9 @@ RBTree<K, V> *RBTree<K, V>::merge(RBTree<K, V> *t1, RBTree<K, V> *t2) {
 	t2->~RBTree();
 	// 奇数高度从红色开始涂
 	bool color = ( (RBTree<K, V>::height(n) & 1) == 0 ) ? BLACK : RED;
-	return new RBTree<K, V>(createTree(nodes, 1, n, color, nullptr), n);
+	RBTree<K, V> *tree = new RBTree<K, V>(createTree(nodes, 1, n, color, nullptr), n);
+	tree->root()->color = BLACK;
+	return tree;
 }
 
 template <class K, class V>
