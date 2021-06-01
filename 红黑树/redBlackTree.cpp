@@ -6,6 +6,7 @@ int main() {
     map<string, RBTree<string, string> *> treeSet;
     string key, opt, value, treeName, t1, t2;
     while (true) {
+        fflush(stdin);
         cin >> opt;
         if (opt == "create") {
             cin >> treeName;
@@ -59,10 +60,8 @@ int main() {
             treeSet[treeName]->inOrderTraverse();
         } else if (opt == "quit") {
             break;
-        } else {
+        } else
             cout << "Invalid operation.\n";
-            fflush(stdin);
-        }
         for (auto &t : treeSet)
             t.second->visual(t.first);
     }

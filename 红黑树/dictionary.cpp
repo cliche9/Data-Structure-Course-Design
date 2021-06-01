@@ -12,6 +12,7 @@ int main() {
 	     << "|                                              |\n"
 	     << "|==============================================|\n\n\n";
     while (true) {
+        fflush(stdin);
         cin >> opt;
         if (opt == "open") {
             cin >> dictName;
@@ -40,10 +41,8 @@ int main() {
                 cout << "待合并的词典不存在!\n";
         } else if (opt == "quit")
             break;
-        else {
+        else
             cout << "Invalid operation.\n";
-            fflush(stdin);
-        }
     }
 
     return 0;
